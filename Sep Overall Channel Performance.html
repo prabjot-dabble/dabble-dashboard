@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dabble — Revenue &amp; Growth Dashboard · Sep 1–6, 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --canvas:#EDF1F5; --surface:#FFFFFF; --surface-2:#F7F9FB;
+  --ink:#0D1B2A; --ink-2:#42566A; --ink-3:#75879A;
+  --line:#DCE3EA; --line-2:#EBF0F4;
+  --brand:#12496E; --brand-2:#1E6C9E; --brand-soft:#E8F1F7;
+  --plan:#A9761B; --plan-soft:#FBF3E4;
+  --pos:#0A7A48; --pos-soft:#E7F5ED;
+  --neg:#B3261E; --neg-soft:#FCEBEA;
+  --warn:#B4690E; --warn-soft:#FDF2E3;
+  --void:#8C9AA8; --void-soft:#F0F2F4;
+  --r:10px; --shadow:0 1px 2px rgba(13,27,42,.06), 0 1px 10px rgba(13,27,42,.04);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--canvas); color:var(--ink);
+  font-family:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:14px; line-height:1.5;
+  font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1;
+}
+h1,h2,h3,h4{margin:0; font-weight:600; letter-spacing:-.015em}
+p{margin:0}
+button{font:inherit; color:inherit}
+.wrap{max-width:1500px; margin:0 auto; padding:0 24px}
+
+/* ---------- masthead ---------- */
+.mast{background:var(--brand); color:#fff; padding:18px 0 16px}
+.mast-in{display:flex; flex-wrap:wrap; gap:20px; align-items:flex-end; justify-content:space-between}
+.mast h1{font-size:20px; color:#fff; line-height:1.2}
+.mast .sub{font-size:13px; color:#B9D3E5; margin-top:3px}
+.mast-tools{display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap}
+.fld{display:flex; flex-direction:column; gap:5px}
+.fld label{font-size:11px; color:#9FC3DA; letter-spacing:.02em}
+.fld select{
+  background:#0E3D5C; border:1px solid #24618A; color:#fff; border-radius:7px;
+  padding:7px 10px; font-size:13px; min-width:104px; cursor:pointer;
+}
+.fld select:focus-visible{outline:2px solid #8FC4E4; outline-offset:1px}
+.rst{background:#0E3D5C; border:1px solid #24618A; color:#CFE4F1; border-radius:7px; padding:8px 12px; font-size:13px; cursor:pointer}
+.rst:hover{background:#124B71}
+
+/* ---------- tabs ---------- */
+.tabs{position:sticky; top:0; z-index:60; background:var(--surface); border-bottom:1px solid var(--line); box-shadow:0 1px 6px rgba(13,27,42,.05)}
+.tabs-in{display:flex; gap:2px; overflow-x:auto; scrollbar-width:thin}
+.tab{
+  border:0; background:none; padding:14px 15px 12px; font-size:13.5px; font-weight:500;
+  color:var(--ink-2); border-bottom:2.5px solid transparent; cursor:pointer; white-space:nowrap;
+}
+.tab:hover{color:var(--ink); background:var(--surface-2)}
+.tab[aria-selected="true"]{color:var(--brand); border-bottom-color:var(--brand); font-weight:600}
+.tab .tnum{color:var(--ink-3); margin-right:7px; font-weight:400}
+.tab[aria-selected="true"] .tnum{color:var(--brand-2)}
+
+/* ---------- structure ---------- */
+main{padding:22px 0 60px}
+.panel[hidden]{display:none}
+section.blk{margin-bottom:22px}
+.blk-hd{margin-bottom:12px}
+.blk-hd h2{font-size:16.5px}
+.blk-hd .q{font-size:13px; color:var(--ink-3); margin-top:3px}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow)}
+.card-hd{padding:14px 16px 0}
+.card-hd h3{font-size:14.5px}
+.card-hd .q{font-size:12.5px; color:var(--ink-3); margin-top:2px}
+.card-bd{padding:14px 16px 16px}
+.grid{display:grid; gap:14px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.span2{grid-column:span 2}
+
+/* ---------- kpi ---------- */
+.kpi{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:13px 15px 14px; box-shadow:var(--shadow)}
+.kpi .k-l{font-size:12px; color:var(--ink-3); min-height:30px}
+.kpi .k-v{font-size:26px; font-weight:700; letter-spacing:-.03em; margin-top:5px; line-height:1.15}
+.kpi .k-f{font-size:12px; color:var(--ink-2); margin-top:5px}
+.kpi.acc-pos{border-left:3px solid var(--pos)}
+.kpi.acc-neg{border-left:3px solid var(--neg)}
+.kpi.acc-warn{border-left:3px solid var(--warn)}
+.kpi.acc-brand{border-left:3px solid var(--brand)}
+.kpi.acc-plan{border-left:3px solid var(--plan)}
+.kpi.acc-void{border-left:3px solid var(--void)}
+.pos{color:var(--pos)} .neg{color:var(--neg)} .warn{color:var(--warn)} .muted{color:var(--ink-3)}
+
+/* ---------- attainment hero ---------- */
+.hero{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow); padding:20px 22px; margin-bottom:16px}
+.hero-grid{display:grid; grid-template-columns:1fr 1fr; gap:26px}
+.att-name{display:flex; justify-content:space-between; align-items:baseline; gap:12px}
+.att-name .n{font-size:14px; font-weight:600}
+.att-name .n small{display:block; font-weight:400; font-size:12px; color:var(--ink-3); margin-top:2px}
+.att-name .pctv{font-size:30px; font-weight:700; letter-spacing:-.03em; line-height:1}
+.track{position:relative; height:34px; background:var(--surface-2); border:1px solid var(--line-2); border-radius:6px; margin-top:12px; overflow:hidden}
+.fillp{position:absolute; inset:0 auto 0 0; background:linear-gradient(90deg,#1B6494,#2C86BF)}
+.fillp.over{background:linear-gradient(90deg,#0A7A48,#17A05F)}
+.planline{position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--plan)}
+.planflag{position:absolute; top:-19px; transform:translateX(-50%); font-size:10.5px; color:var(--plan); font-weight:600; white-space:nowrap}
+.att-foot{display:flex; justify-content:space-between; gap:12px; font-size:12.5px; color:var(--ink-2); margin-top:18px}
+.att-foot b{font-weight:600; color:var(--ink)}
+
+/* ---------- callout / insight ---------- */
+.callout{border-radius:var(--r); padding:14px 16px; font-size:13.5px; line-height:1.6}
+.callout.brand{background:var(--brand-soft); border:1px solid #C7DEEC; color:#0C3A57}
+.callout.warnc{background:var(--warn-soft); border:1px solid #F0D9B4; color:#7A470A}
+.callout b{font-weight:600}
+.ins-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
+.ins{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden}
+.ins summary{padding:13px 15px; cursor:pointer; font-size:13.5px; font-weight:600; list-style:none; display:flex; justify-content:space-between; gap:10px; align-items:center}
+.ins summary::-webkit-details-marker{display:none}
+.ins summary .chev{color:var(--ink-3); font-size:12px; font-weight:400; transition:transform .18s ease}
+.ins[open] summary .chev{transform:rotate(90deg)}
+.ins summary:hover{background:var(--surface-2)}
+.ins .body{padding:0 15px 14px; font-size:13px; color:var(--ink-2); line-height:1.62}
+.ins .body ul{margin:0; padding-left:17px}
+.ins .body li{margin-bottom:6px}
+.ins .body li:last-child{margin-bottom:0}
+.ins .body b{color:var(--ink); font-weight:600}
+.ins.t-pos{border-top:3px solid var(--pos)}
+.ins.t-neg{border-top:3px solid var(--neg)}
+.ins.t-warn{border-top:3px solid var(--warn)}
+.ins.t-brand{border-top:3px solid var(--brand)}
+
+/* ---------- tables ---------- */
+.tbl-scroll{overflow-x:auto}
+table{border-collapse:collapse; width:100%; font-size:12.5px}
+th,td{padding:8px 10px; text-align:right; border-bottom:1px solid var(--line-2); white-space:nowrap}
+th{font-size:11.5px; color:var(--ink-3); font-weight:600; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--surface); z-index:1}
+td:first-child,th:first-child{text-align:left; font-weight:600}
+tbody tr:hover td{background:var(--surface-2)}
+tfoot td{font-weight:700; border-top:2px solid var(--line); border-bottom:0; background:var(--surface-2)}
+.cell-hi{background:var(--pos-soft) !important; color:#075E38; font-weight:600}
+.cell-lo{background:var(--neg-soft) !important; color:#8F1E17; font-weight:600}
+.cell-mid{background:#FAFCF9}
+.cell-na{background:var(--void-soft) !important; color:var(--void); font-style:italic}
+.dayrow-best td:first-child{box-shadow:inset 3px 0 0 var(--pos)}
+.dayrow-worst td:first-child{box-shadow:inset 3px 0 0 var(--neg)}
+
+/* ---------- chips / badges ---------- */
+.chips{display:flex; flex-wrap:wrap; gap:7px; align-items:center}
+.chip{border:1px solid var(--line); background:var(--surface); border-radius:999px; padding:5px 12px; font-size:12.5px; color:var(--ink-2); cursor:pointer}
+.chip:hover{border-color:var(--brand-2); color:var(--brand)}
+.chip[aria-pressed="true"]{background:var(--brand); border-color:var(--brand); color:#fff; font-weight:500}
+.chip:focus-visible{outline:2px solid var(--brand-2); outline-offset:1px}
+.badge{display:inline-block; font-size:11px; font-weight:600; padding:2.5px 8px; border-radius:5px}
+.b-pos{background:var(--pos-soft); color:var(--pos)}
+.b-neg{background:var(--neg-soft); color:var(--neg)}
+.b-warn{background:var(--warn-soft); color:var(--warn)}
+.b-void{background:var(--void-soft); color:var(--void)}
+.b-brand{background:var(--brand-soft); color:var(--brand)}
+
+/* ---------- alerts ---------- */
+.alert{display:grid; grid-template-columns:26px 1fr; gap:12px; padding:13px 15px; border-bottom:1px solid var(--line-2)}
+.alert:last-child{border-bottom:0}
+.alert .dot{font-size:15px; line-height:1.4}
+.alert .ttl{font-size:13.5px; font-weight:600; margin-bottom:3px}
+.alert .dsc{font-size:12.8px; color:var(--ink-2); line-height:1.6}
+.alert .dsc b{color:var(--ink)}
+.alert .evd{font-size:12px; color:var(--ink-3); margin-top:4px}
+
+/* ---------- charts ---------- */
+.chart{position:relative; width:100%}
+.h240{height:240px} .h280{height:280px} .h320{height:320px} .h360{height:360px}
+
+/* ---------- funnel ---------- */
+.funnel{display:flex; flex-direction:column; gap:3px}
+.fstep{position:relative; background:var(--surface-2); border:1px solid var(--line-2); border-radius:7px; overflow:hidden}
+.fbar{position:absolute; inset:0 auto 0 0; background:linear-gradient(90deg,#0E4166,#3B90C6)}
+.fin{position:relative; display:flex; justify-content:space-between; align-items:center; padding:12px 14px; gap:12px}
+.fin .fl{font-size:13px; font-weight:600}
+.fin .fv{font-size:17px; font-weight:700; letter-spacing:-.02em}
+.fdrop{display:flex; align-items:center; gap:8px; padding:2px 14px; font-size:11.5px; color:var(--ink-3)}
+.fdrop b{color:var(--ink-2); font-weight:600}
+
+.mini{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line-2); border:1px solid var(--line-2); border-radius:8px; overflow:hidden}
+.mini > div{background:var(--surface); padding:11px 13px}
+.mini .m-l{font-size:11.5px; color:var(--ink-3)}
+.mini .m-v{font-size:18px; font-weight:700; letter-spacing:-.02em; margin-top:3px}
+.mini .m-f{font-size:11.5px; color:var(--ink-2); margin-top:2px}
+
+.note{font-size:11.8px; color:var(--ink-3); line-height:1.6; margin-top:10px}
+.note b{color:var(--ink-2); font-weight:600}
+.formula{font-size:11.5px; color:var(--ink-3); background:var(--surface-2); border:1px solid var(--line-2); border-radius:6px; padding:8px 10px; line-height:1.7; margin-top:10px}
+.formula span{color:var(--ink-2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:var(--ink-2); margin-top:10px}
+.legend i{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:6px; vertical-align:-1px}
+
+footer{border-top:1px solid var(--line); padding:20px 0 40px; font-size:12px; color:var(--ink-3); line-height:1.7}
+footer b{color:var(--ink-2)}
+
+@media (max-width:1180px){
+  .g4{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:920px){
+  .wrap{padding:0 14px}
+  .hero-grid,.g2,.g3,.g4,.ins-grid{grid-template-columns:1fr}
+  .span2{grid-column:span 1}
+  .mini{grid-template-columns:repeat(2,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important}}
+</style>
+</head>
+<body>
+<header class="mast">
+  <div class="wrap mast-in">
+    <div>
+      <h1>Dabble — Revenue &amp; Growth Dashboard</h1>
+      <p class="sub" id="periodSub">September 1–6, 2026 · Week 1 (partial week, 6 of 7 days)</p>
+    </div>
+    <div class="mast-tools">
+      <div class="fld"><label for="dFrom">From</label><select id="dFrom"></select></div>
+      <div class="fld"><label for="dTo">To</label><select id="dTo"></select></div>
+      <button class="rst" id="btnReset" type="button">Reset to Sep 1–6</button>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Dashboard sections">
+  <div class="wrap tabs-in" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-p="p1"><span class="tnum">1</span>Executive overview</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="p2"><span class="tnum">2</span>Target vs actual</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="p3"><span class="tnum">3</span>Website funnel</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="p4"><span class="tnum">4</span>Channel performance</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="p5"><span class="tnum">5</span>Spend &amp; ROAS</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="p6"><span class="tnum">6</span>Daily &amp; weekly trends</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="p7"><span class="tnum">7</span>Insights &amp; actions</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ══════════ TAB 1 ══════════ -->
+<div class="panel" id="p1" role="tabpanel">
+
+  <div class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="att-name">
+          <div class="n">Dabble (own website)<small id="heroDabSub">Plan vs actual, cumulative</small></div>
+          <div class="pctv" id="heroDabPct">—</div>
+        </div>
+        <div class="track"><div class="fillp" id="heroDabFill"></div><div class="planline" id="heroDabPlan"><span class="planflag">Plan</span></div></div>
+        <div class="att-foot">
+          <span>Plan <b id="heroDabPlanV">—</b></span>
+          <span>Actual <b id="heroDabActV">—</b></span>
+          <span>Variance <b id="heroDabVar">—</b></span>
+        </div>
+      </div>
+      <div>
+        <div class="att-name">
+          <div class="n">Dabble + 3P (total business)<small id="heroTotSub">Plan vs actual, cumulative</small></div>
+          <div class="pctv" id="heroTotPct">—</div>
+        </div>
+        <div class="track"><div class="fillp" id="heroTotFill"></div><div class="planline" id="heroTotPlan"><span class="planflag">Plan</span></div></div>
+        <div class="att-foot">
+          <span>Plan <b id="heroTotPlanV">—</b></span>
+          <span>Actual <b id="heroTotActV">—</b></span>
+          <span>Variance <b id="heroTotVar">—</b></span>
+        </div>
+      </div>
+    </div>
+    <div class="callout brand" id="heroRead" style="margin-top:20px"></div>
+  </div>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>Business scorecard</h2><p class="q">Where are we against plan, and what is each part of the business contributing?</p></div>
+    <div class="grid g4" id="kpiRow1"></div>
+  </section>
+
+  <section class="blk">
+    <div class="grid g4" id="kpiRow2"></div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>What the numbers say</h2><p class="q">The five things a CEO should take from this period.</p></div>
+    <div class="ins-grid" id="topInsights"></div>
+  </section>
+
+  <section class="blk">
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-hd"><h3>Attainment by day</h3><p class="q">Which days carried the period, and which fell short?</p></div>
+        <div class="card-bd"><div class="chart h280"><canvas id="cAchDaily"></canvas></div>
+          <div class="note">The 100% line is plan. Dabble clears it on 4 of 6 days; total business clears it on 2.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><h3>Where GMV comes from</h3><p class="q">How concentrated is revenue across channels?</p></div>
+        <div class="card-bd"><div class="chart h280"><canvas id="cMix"></canvas></div>
+          <div class="note">Share of reconciled Dabble + 3P GMV. BIK sits inside website GMV and is not added again.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════ TAB 2 ══════════ -->
+<div class="panel" id="p2" role="tabpanel" hidden>
+  <section class="blk">
+    <div class="blk-hd"><h2>Cumulative target vs actual</h2><p class="q">Is the beat coming from our own website or from marketplaces?</p></div>
+    <div class="grid g2">
+      <div class="card"><div class="card-bd"><div class="chart h320"><canvas id="cTvA"></canvas></div></div></div>
+      <div class="card">
+        <div class="card-hd"><h3>The split behind the headline</h3><p class="q">3P is derived as Dabble + 3P minus Dabble.</p></div>
+        <div class="card-bd"><div class="tbl-scroll"><table id="tSplit"></table></div>
+          <div class="formula">Achievement % = <span>Actual ÷ Plan</span> · Variance ₹ = <span>Actual − Plan</span> · 3P = <span>(Dabble+3P) − Dabble</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>Daily target vs actual</h2><p class="q">Plan, actual, achievement and rupee variance for every day.</p></div>
+    <div class="card"><div class="card-bd">
+      <div class="chart h320"><canvas id="cTvADaily"></canvas></div>
+      <div class="tbl-scroll" style="margin-top:16px"><table id="tTvADaily"></table></div>
+    </div></div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>Day-level diagnosis</h2><p class="q">Strongest and weakest days, and how much rests on one of them.</p></div>
+    <div class="grid g4" id="diagCards"></div>
+    <div class="card" style="margin-top:14px"><div class="card-hd"><h3>Why Sep 6 matters more than its rank</h3><p class="q">Separating what happened from what it means.</p></div>
+      <div class="card-bd" id="sep6Box"></div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════ TAB 3 ══════════ -->
+<div class="panel" id="p3" role="tabpanel" hidden>
+  <section class="blk">
+    <div class="blk-hd"><h2>Website funnel</h2><p class="q">Traffic → add to cart → orders → GMV, for the selected period.</p></div>
+    <div class="grid g2">
+      <div class="card"><div class="card-bd"><div class="funnel" id="funnelBox"></div>
+        <div class="formula">ATC rate = <span>ATC ÷ Traffic</span> · Conversion = <span>Orders ÷ Traffic</span> · Cart-to-order = <span>Orders ÷ ATC</span> · AOV = <span>GMV ÷ Orders</span> · Revenue per visitor = <span>GMV ÷ Traffic</span></div>
+      </div></div>
+      <div class="card">
+        <div class="card-hd"><h3>Funnel rates</h3><p class="q">Recomputed from raw counts, not taken from the sheet.</p></div>
+        <div class="card-bd"><div class="mini" id="funnelMini"></div>
+          <div class="chart h240" style="margin-top:14px"><canvas id="cFunnelRates"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <div class="card">
+      <div class="card-hd"><h3>Daily funnel trend</h3><p class="q">Is GMV moving because of traffic, conversion, or basket size?</p></div>
+      <div class="card-bd">
+        <div class="chips" id="funnelToggle" style="margin-bottom:12px"></div>
+        <div class="chart h320"><canvas id="cFunnelDaily"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>Funnel diagnosis</h2><p class="q">What moved, and what the available data can and cannot attribute it to.</p></div>
+    <div class="ins-grid" id="funnelDiag"></div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>Returning vs new customers</h2><p class="q">Are we growing on repeat demand or on acquisition?</p></div>
+    <div class="grid g2">
+      <div class="card"><div class="card-hd"><h3>Segment comparison</h3><p class="q">Traffic, conversion, orders and basket size side by side.</p></div>
+        <div class="card-bd"><div class="tbl-scroll"><table id="tRbNb"></table></div>
+          <div class="note" id="rbnbNote"></div>
+        </div>
+      </div>
+      <div class="card"><div class="card-hd"><h3>Conversion and basket by segment</h3><p class="q">Repeat buyers convert better; new buyers spend more per order.</p></div>
+        <div class="card-bd"><div class="chart h280"><canvas id="cRbNb"></canvas></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>Website profitability &amp; marketing efficiency</h2><p class="q">How much of GMV survives as net revenue, and what does an order cost?</p></div>
+    <div class="grid g4" id="profitKpis"></div>
+    <div class="card" style="margin-top:14px"><div class="card-hd"><h3>Marketing intensity by day</h3><p class="q">Marketing spend as a share of GMV, against cost per order.</p></div>
+      <div class="card-bd"><div class="chart h300" style="height:300px"><canvas id="cProfit"></canvas></div>
+        <div class="tbl-scroll" style="margin-top:16px"><table id="tProfit"></table></div>
+        <div class="formula">Marketing % = <span>Marketing spend ÷ GMV</span> · CPU = <span>Marketing spend ÷ Orders</span> · Spend ÷ net revenue = <span>Marketing spend ÷ Net revenue</span>. PM% and Promo% are shown as reported in the workbook.</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════ TAB 4 ══════════ -->
+<div class="panel" id="p4" role="tabpanel" hidden>
+  <section class="blk">
+    <div class="blk-hd"><h2>Channel matrix</h2><p class="q">Revenue, cost and efficiency for every channel in one view.</p></div>
+    <div class="chips" id="chanFilter" style="margin-bottom:12px"></div>
+    <div class="card"><div class="card-bd"><div class="tbl-scroll"><table id="tChan"></table></div>
+      <div class="note" id="chanNote"></div>
+    </div></div>
+  </section>
+
+  <section class="blk">
+    <div class="grid g2">
+      <div class="card"><div class="card-hd"><h3>Daily GMV by channel</h3><p class="q">How the mix shifts day to day.</p></div>
+        <div class="card-bd"><div class="chart h320"><canvas id="cChanStack"></canvas></div></div>
+      </div>
+      <div class="card"><div class="card-hd"><h3>Rankings</h3><p class="q">Size, growth, efficiency and cost tell four different stories.</p></div>
+        <div class="card-bd" id="rankBox"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>Amazon</h2><p class="q">The largest single channel — is it growing, and at what cost?</p></div>
+    <div class="grid g4" id="amzKpis"></div>
+    <div class="card" style="margin-top:14px"><div class="card-bd">
+      <div class="chart h280"><canvas id="cAmz"></canvas></div>
+      <div class="note" id="amzNote"></div>
+    </div></div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>BIK and BlinkIT</h2><p class="q">Two small channels moving in opposite directions, one with missing cost data.</p></div>
+    <div class="grid g2">
+      <div class="card"><div class="card-hd"><h3>BIK</h3><p class="q">Inside website GMV. Spend cut hard — revenue followed.</p></div>
+        <div class="card-bd"><div class="mini" id="bikMini"></div>
+          <div class="chart h240" style="margin-top:14px"><canvas id="cBik"></canvas></div>
+          <div class="note" id="bikNote"></div>
+        </div>
+      </div>
+      <div class="card"><div class="card-hd"><h3>BlinkIT</h3><p class="q">Growing GMV, but cost is unreported for the two most recent days.</p></div>
+        <div class="card-bd"><div class="mini" id="blkMini"></div>
+          <div class="chart h240" style="margin-top:14px"><canvas id="cBlk"></canvas></div>
+          <div class="note" id="blkNote"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════ TAB 5 ══════════ -->
+<div class="panel" id="p5" role="tabpanel" hidden>
+  <section class="blk">
+    <div class="blk-hd"><h2>Where the money went</h2><p class="q">Total recorded media spend and what it returned.</p></div>
+    <div class="grid g4" id="spendKpis"></div>
+  </section>
+
+  <section class="blk">
+    <div class="grid g2">
+      <div class="card"><div class="card-hd"><h3>Daily spend by channel</h3><p class="q">Which platform is absorbing the budget each day?</p></div>
+        <div class="card-bd"><div class="chart h320"><canvas id="cSpendStack"></canvas></div>
+          <div class="note" id="spendStackNote"></div>
+        </div>
+      </div>
+      <div class="card"><div class="card-hd"><h3>Spend against GMV</h3><p class="q">Is more spend actually buying more revenue?</p></div>
+        <div class="card-bd"><div class="chart h320"><canvas id="cSpendVsGmv"></canvas></div>
+          <div class="note" id="spendGmvNote"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>ROAS by channel</h2><p class="q">Efficiency, sized by how much money is actually behind it.</p></div>
+    <div class="grid g2">
+      <div class="card"><div class="card-bd"><div class="chart h320"><canvas id="cRoas"></canvas></div>
+        <div class="note">Reported ROAS is the platform-attributed figure in the workbook. Blended ROAS divides total channel GMV by recorded spend and is usually higher, because it includes organic and repeat demand.</div>
+      </div></div>
+      <div class="card"><div class="card-hd"><h3>Spend–efficiency quadrant</h3><p class="q">Scale, fix, test or leave alone.</p></div>
+        <div class="card-bd" id="quadBox"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <div class="card"><div class="card-hd"><h3>Spend and return by day</h3><p class="q">Full detail behind the charts above.</p></div>
+      <div class="card-bd"><div class="tbl-scroll"><table id="tSpend"></table></div>
+        <div class="formula">Blended ROAS = <span>GMV ÷ recorded spend</span> · Spend ÷ GMV = <span>recorded spend ÷ GMV</span>. Days marked <b>Not Updated</b> are excluded from ROAS, never treated as zero.</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════ TAB 6 ══════════ -->
+<div class="panel" id="p6" role="tabpanel" hidden>
+  <section class="blk">
+    <div class="blk-hd"><h2>Daily performance</h2><p class="q">Every channel, spend and website metric on one line per day.</p></div>
+    <div class="card"><div class="card-bd"><div class="tbl-scroll"><table id="tDaily"></table></div>
+      <div class="legend">
+        <span><i style="background:var(--pos-soft); border:1px solid #B7E0C9"></i>Best in column</span>
+        <span><i style="background:var(--neg-soft); border:1px solid #F2C3BF"></i>Weakest in column</span>
+        <span><i style="background:var(--void-soft); border:1px solid var(--line)"></i>Not updated in source</span>
+        <span><i style="background:var(--pos)"></i>Best overall day</span>
+        <span><i style="background:var(--neg)"></i>Weakest overall day</span>
+      </div>
+    </div></div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>Growth and degrowth</h2><p class="q">Day-over-day movement, and which channel caused it.</p></div>
+    <div class="grid g2">
+      <div class="card"><div class="card-bd"><div class="chart h280"><canvas id="cGrowth"></canvas></div>
+        <div class="note" id="growthNote"></div>
+      </div></div>
+      <div class="card"><div class="card-hd"><h3>Who moved the number</h3><p class="q">Rupee contribution to each day's change.</p></div>
+        <div class="card-bd"><div class="chart h280"><canvas id="cGrowthContrib"></canvas></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>Week 1 — Sep 1–6 (partial week, 6 of 7 days)</h2><p class="q">The only week in the file, and it is incomplete. Do not read it as a full week.</p></div>
+    <div class="card"><div class="card-bd"><div class="grid g4" id="weekKpis"></div>
+      <div class="callout warnc" style="margin-top:14px">This week runs Tuesday to Sunday. Monday is absent from the workbook, so week-on-week comparison is not possible and per-day averages are drawn from 6 days, not 7.</div>
+    </div></div>
+  </section>
+</div>
+
+<!-- ══════════ TAB 7 ══════════ -->
+<div class="panel" id="p7" role="tabpanel" hidden>
+  <section class="blk">
+    <div class="blk-hd"><h2>Attention required</h2><p class="q">Flags raised against a stated threshold — nothing here is generic.</p></div>
+    <div class="card"><div id="alertBox"></div></div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>CEO briefing</h2><p class="q">The ten questions this dashboard exists to answer.</p></div>
+    <div class="ins-grid" id="ceoInsights"></div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-hd"><h2>Data notes and reconciliation</h2><p class="q">What was checked, what did not tie out, and what is missing.</p></div>
+    <div class="card"><div class="card-bd" id="dataNotes"></div></div>
+  </section>
+</div>
+
+</main>
+
+<footer class="wrap">
+  <p><b>Source:</b> Overall_Channel_Performance-Sep.xlsx — sheets “Overall Target vs Acv”, “Dabble Website Performance”, “Overall Channel Performance”. All figures for 1–6 September 2026.</p>
+  <p style="margin-top:6px">Every metric on this page is either read directly from the workbook or derived from workbook fields using the formulas shown. Missing source values are labelled <b>Not Updated</b> and are excluded from calculations rather than treated as zero.</p>
+</footer>
+<script>
+/* ==========================================================================
+   DATA — transcribed verbatim from Overall_Channel_Performance-Sep.xlsx
+   null  = value absent / "Not Update Yet" in source. Never treated as zero.
+   ========================================================================== */
+const D = [
+ {lbl:"Sep 1", dow:"Tue", ev:"Month Start", wk:"Week 1",
+  dPlan:48331.51, dAct:53914.37, tPlan:154808.37, tAct:132083.41,
+  traff:928, atc:98, orders:49, netRev:46373.13, markSp:19374, aovRep:967.40, convRep:0.0528, cpuRep:395.38,
+  pm:0.9003, promo:0.0524, markPct:0.3593,
+  rbTr:211, nbTr:565, rbConv:0.0711, nbConv:0.0602, rbAov:1337.24, nbAov:1003.93, rbOrd:15, nbOrd:34,
+  rbSp:10339, nbSp:11795.44, rbCpu:689.27, nbCpu:346.92, rcr:0.3125,
+  webPaid:48511, bikGmv:23750, bikSp:1900, bikRoas:13, metaSp:19374, googSp:0, webAds:19666,
+  metaRoas:2.50, googRoas:0, avgRoas:2.50, webBlendRoas:2.74,
+  amzGmv:68651, amzB2b:584, amzTot:69235, amzSp:12473, amzRoas:2.6,
+  blkGmv:4491, blkSp:721, blkRoas:4.28, fcGmv:3684, tmsGmv:759,
+  totRep:131908.41, growthRep:null},
+ {lbl:"Sep 2", dow:"Wed", ev:"BAU", wk:"Week 1",
+  dPlan:54127.90, dAct:52456.70, tPlan:163265.81, tAct:144024.29,
+  traff:924, atc:102, orders:45, netRev:44972.20, markSp:20227, aovRep:999.38, convRep:0.0487, cpuRep:449.48,
+  pm:0.8982, promo:0.0540, markPct:0.3856,
+  rbTr:206, nbTr:558, rbConv:0.0583, nbConv:0.0591, rbAov:1262.85, nbAov:1100.79, rbOrd:12, nbOrd:33,
+  rbSp:9270, nbSp:12214.79, rbCpu:772.50, nbCpu:370.15, rcr:0.2666,
+  webPaid:40648, bikGmv:14300, bikSp:739, bikRoas:19, metaSp:20227, googSp:0, webAds:20410,
+  metaRoas:2.01, googRoas:0, avgRoas:2.01, webBlendRoas:2.57,
+  amzGmv:76224, amzB2b:1341, amzTot:77565, amzSp:14149, amzRoas:2.9,
+  blkGmv:8045, blkSp:674, blkRoas:3.85, fcGmv:5958, tmsGmv:0,
+  totRep:145364.88, growthRep:0.1020},
+ {lbl:"Sep 3", dow:"Thu", ev:"BAU", wk:"Week 1",
+  dPlan:51093.92, dAct:49714.29, tPlan:151420.63, tAct:142372.29,
+  traff:997, atc:94, orders:39, netRev:42693.78, markSp:26669, aovRep:1094.71, convRep:0.0391, cpuRep:683.83,
+  pm:0.8872, promo:0.0397, markPct:0.5365,
+  rbTr:193, nbTr:630, rbConv:0.0622, nbConv:0.0429, rbAov:903.27, nbAov:1179.80, rbOrd:12, nbOrd:27,
+  rbSp:7527, nbSp:16852.20, rbCpu:627.25, nbCpu:624.16, rcr:0.3157,
+  webPaid:40310, bikGmv:13400, bikSp:292, bikRoas:46, metaSp:26669, googSp:0, webAds:26821,
+  metaRoas:1.51, googRoas:0, avgRoas:1.51, webBlendRoas:1.85,
+  amzGmv:79218, amzB2b:2835, amzTot:82053, amzSp:14521, amzRoas:2.4,
+  blkGmv:2795, blkSp:673, blkRoas:0.52, fcGmv:7810, tmsGmv:0,
+  totRep:145207.29, growthRep:-0.0011},
+ {lbl:"Sep 4", dow:"Fri", ev:"BAU", wk:"Week 1",
+  dPlan:34905.62, dAct:45056.52, tPlan:136715.09, tAct:127481.54,
+  traff:1041, atc:81, orders:35, netRev:38325.28, markSp:30435, aovRep:1127.84, convRep:0.0336, cpuRep:869.56,
+  pm:0.8654, promo:0.0522, markPct:0.6755,
+  rbTr:180, nbTr:676, rbConv:0.0722, nbConv:0.0325, rbAov:1516.96, nbAov:1243.00, rbOrd:13, nbOrd:22,
+  rbSp:6300, nbSp:19763.45, rbCpu:484.62, nbCpu:898.34, rcr:0.3939,
+  webPaid:37254, bikGmv:12050, bikSp:183, bikRoas:66, metaSp:30435, googSp:0, webAds:30541,
+  metaRoas:1.22, googRoas:0, avgRoas:1.22, webBlendRoas:1.48,
+  amzGmv:69672, amzB2b:2202, amzTot:71874, amzSp:13581, amzRoas:2.1,
+  blkGmv:6786, blkSp:745, blkRoas:1.85, fcGmv:3765, tmsGmv:0,
+  totRep:129683.54, growthRep:-0.1069},
+ {lbl:"Sep 5", dow:"Sat", ev:"Weekend", wk:"Week 1",
+  dPlan:30874.46, dAct:42665.12, tPlan:145365.53, tAct:157839.14,
+  traff:780, atc:70, orders:34, netRev:36856.38, markSp:21768, aovRep:1160.42, convRep:0.0436, cpuRep:640.23,
+  pm:0.8499, promo:0.0703, markPct:0.5102,
+  rbTr:148, nbTr:494, rbConv:0.0743, nbConv:0.0466, rbAov:1265.77, nbAov:1501.34, rbOrd:11, nbOrd:23,
+  rbSp:5032, nbSp:13786.28, rbCpu:457.45, nbCpu:599.40, rcr:0.3030,
+  webPaid:38744, bikGmv:15800, bikSp:152, bikRoas:104, metaSp:21768, googSp:0, webAds:21768,
+  metaRoas:1.78, googRoas:0, avgRoas:1.78, webBlendRoas:1.96,
+  amzGmv:91519, amzB2b:1031, amzTot:92550, amzSp:16440, amzRoas:3.1,
+  blkGmv:9760, blkSp:null, blkRoas:null, fcGmv:12864, tmsGmv:0,
+  totRep:158870.14, growthRep:0.2251},
+ {lbl:"Sep 6", dow:"Sun", ev:"Weekend", wk:"Week 1",
+  dPlan:28222.38, dAct:116177.31, tPlan:133566.20, tAct:211124.31,
+  traff:738, atc:73, orders:37, netRev:99198.61, markSp:23478, aovRep:2681.04, convRep:0.0501, cpuRep:634.54,
+  pm:0.9424, promo:0.0801, markPct:0.2021,
+  rbTr:215, nbTr:472, rbConv:0.0605, nbConv:0.0508, rbAov:1426.93, nbAov:4703.40, rbOrd:13, nbOrd:24,
+  rbSp:7955, nbSp:15015.67, rbCpu:611.92, nbCpu:625.65, rcr:0.3611,
+  webPaid:40733, bikGmv:4950, bikSp:107, bikRoas:46, metaSp:23478, googSp:0, webAds:23478,
+  metaRoas:1.73, googRoas:0, avgRoas:1.73, webBlendRoas:4.95,
+  amzGmv:82229, amzB2b:0, amzTot:82229, amzSp:17406, amzRoas:2.7,
+  blkGmv:6267, blkSp:null, blkRoas:null, fcGmv:6451, tmsGmv:0,
+  totRep:211124.31, growthRep:0.3289}
+];
+
+/* Workbook-stated totals for the full Sep 1–6 period (validation targets) */
+const BOOK = {dPlan:247555.78, dAct:359984.31, dAch:1.4542, tPlan:885141.62, tAct:914924.98, tAch:1.0336};
+
+/* ---------------- formatting ---------------- */
+const nf = n => (n===null||n===undefined||isNaN(n)) ? "—" : Math.round(n).toLocaleString("en-IN");
+function money(v, dp){            // ₹ with Indian abbreviations
+  if(v===null||v===undefined||isNaN(v)) return "Not Updated";
+  const s = v<0 ? "−" : "", a = Math.abs(v);
+  if(a>=1e7) return s+"₹"+(a/1e7).toFixed(a/1e7>=10?1:2)+"Cr";
+  if(a>=1e5) return s+"₹"+(a/1e5).toFixed(a/1e5>=10?1:2)+"L";
+  if(a>=1000) return s+"₹"+(a/1000).toFixed(a/1000>=10?0:1)+"K";
+  return s+"₹"+a.toFixed(dp||0);
+}
+const moneyFull = v => (v===null||v===undefined||isNaN(v)) ? "Not Updated" : (v<0?"−":"")+"₹"+Math.abs(v).toLocaleString("en-IN",{maximumFractionDigits:0});
+const pct  = (v,dp) => (v===null||v===undefined||isNaN(v)) ? "—" : (v*100).toFixed(dp===undefined?1:dp)+"%";
+const pctp = (v,dp) => (v===null||v===undefined||isNaN(v)) ? "—" : (v>0?"+":"")+(v*100).toFixed(dp===undefined?1:dp)+"%";
+const rx   = v => (v===null||v===undefined||isNaN(v)) ? "Not Updated" : v.toFixed(2)+"x";
+const sgn  = v => v>0 ? "pos" : (v<0 ? "neg" : "muted");
+
+/* ---------------- period aggregation ---------------- */
+const sum = (a,f) => a.reduce((t,r)=>{const v=f(r); return t + (v===null||v===undefined||isNaN(v)?0:v);},0);
+const sumN = (a,f) => a.reduce((t,r)=>{const v=f(r); return v===null||v===undefined?t:t+v;},0);   // skips nulls
+const cnt = (a,f) => a.filter(r=>f(r)!==null && f(r)!==undefined).length;
+
+let FROM = 0, TO = 5;
+let rows = D.slice(0,6);
+
+function agg(rs){
+  const a = {};
+  a.n = rs.length;
+  a.dPlan = sum(rs,r=>r.dPlan); a.dAct = sum(rs,r=>r.dAct);
+  a.tPlan = sum(rs,r=>r.tPlan); a.tAct = sum(rs,r=>r.tAct);
+  a.dAch = a.dAct/a.dPlan; a.tAch = a.tAct/a.tPlan;
+  a.dVar = a.dAct-a.dPlan;   a.tVar = a.tAct-a.tPlan;
+  a.pPlan = a.tPlan-a.dPlan; a.pAct = a.tAct-a.dAct;             // 3P derived
+  a.pAch = a.pAct/a.pPlan;   a.pVar = a.pAct-a.pPlan;
+
+  a.traff = sum(rs,r=>r.traff); a.atc = sum(rs,r=>r.atc); a.orders = sum(rs,r=>r.orders);
+  a.gmv = a.dAct; a.netRev = sum(rs,r=>r.netRev); a.markSp = sum(rs,r=>r.markSp);
+  a.atcRate = a.atc/a.traff; a.conv = a.orders/a.traff; a.a2o = a.orders/a.atc;
+  a.aov = a.gmv/a.orders; a.rpv = a.gmv/a.traff;
+  a.nrRatio = a.netRev/a.gmv; a.cpu = a.markSp/a.orders;
+  a.spOverGmv = a.markSp/a.gmv; a.spOverNr = a.markSp/a.netRev;
+
+  a.rbTr = sum(rs,r=>r.rbTr); a.nbTr = sum(rs,r=>r.nbTr);
+  a.rbOrd = sum(rs,r=>r.rbOrd); a.nbOrd = sum(rs,r=>r.nbOrd);
+  a.rbSp = sum(rs,r=>r.rbSp); a.nbSp = sum(rs,r=>r.nbSp);
+  a.rbConv = a.rbOrd/a.rbTr; a.nbConv = a.nbOrd/a.nbTr;
+  a.rbCpu = a.rbSp/a.rbOrd; a.nbCpu = a.nbSp/a.nbOrd;
+  a.rbGmvI = rs.reduce((t,r)=>t+r.rbAov*r.rbOrd,0);              // implied, directional only
+  a.nbGmvI = rs.reduce((t,r)=>t+r.nbAov*r.nbOrd,0);
+  a.rbAov = a.rbGmvI/a.rbOrd; a.nbAov = a.nbGmvI/a.nbOrd;
+  a.rcr = a.rbOrd/a.orders;
+  a.trAttrib = a.rbTr+a.nbTr; a.trGap = a.traff-a.trAttrib;
+
+  a.webGmv = a.dAct; a.webPaid = sum(rs,r=>r.webPaid);
+  a.bikGmv = sum(rs,r=>r.bikGmv); a.bikSp = sum(rs,r=>r.bikSp);
+  a.metaSp = sum(rs,r=>r.metaSp); a.googSp = sum(rs,r=>r.googSp); a.webAds = sum(rs,r=>r.webAds);
+  a.amzGmv = sum(rs,r=>r.amzGmv); a.amzB2b = sum(rs,r=>r.amzB2b); a.amzTot = sum(rs,r=>r.amzTot); a.amzSp = sum(rs,r=>r.amzSp);
+  a.blkGmv = sum(rs,r=>r.blkGmv); a.blkSp = sumN(rs,r=>r.blkSp); a.blkSpDays = cnt(rs,r=>r.blkSp);
+  a.blkGmvKnown = rs.filter(r=>r.blkSp!==null).reduce((t,r)=>t+r.blkGmv,0);
+  a.blkGmvUnknown = a.blkGmv - a.blkGmvKnown;
+  a.fcGmv = sum(rs,r=>r.fcGmv); a.tmsGmv = sum(rs,r=>r.tmsGmv);
+  a.totRep = sum(rs,r=>r.totRep);
+
+  a.spend = a.metaSp + a.googSp + a.bikSp + a.amzSp + a.blkSp;   // channel build-up
+  a.spendGmv = a.spend/a.tAct; a.blendRoas = a.tAct/a.spend;
+  return a;
+}
+let A = agg(rows);
+
+/* channel definitions — BIK is a component of website GMV, flagged so it is
+   never added into the contribution total twice. */
+const CH = [
+  {k:"web",  n:"Website (Dabble)", c:"#12496E", gmv:a=>a.webGmv,  sp:a=>a.webAds, d:r=>r.dAct,   ds:r=>r.webAds, roas:a=>a.webGmv/a.webAds,  rep:"Blended 2.52x", inTotal:true},
+  {k:"amz",  n:"Amazon (incl. B2B)", c:"#2C86BF", gmv:a=>a.amzTot, sp:a=>a.amzSp,  d:r=>r.amzTot, ds:r=>r.amzSp,  roas:a=>a.amzTot/a.amzSp,   rep:"Reported ads ROAS", inTotal:true},
+  {k:"blk",  n:"BlinkIT",         c:"#A9761B", gmv:a=>a.blkGmv, sp:a=>a.blkSp,  d:r=>r.blkGmv, ds:r=>r.blkSp,  roas:a=>a.blkGmvKnown/a.blkSp, rep:"Partial", inTotal:true},
+  {k:"fc",   n:"FirstCry",        c:"#0A7A48", gmv:a=>a.fcGmv,  sp:()=>null,    d:r=>r.fcGmv,  ds:()=>null,    roas:()=>null,              rep:"No spend recorded", inTotal:true},
+  {k:"tms",  n:"The Moms Store",  c:"#8C9AA8", gmv:a=>a.tmsGmv, sp:()=>null,    d:r=>r.tmsGmv, ds:()=>null,    roas:()=>null,              rep:"No spend recorded", inTotal:true},
+  {k:"bik",  n:"BIK (within website)", c:"#6B4E9E", gmv:a=>a.bikGmv, sp:a=>a.bikSp, d:r=>r.bikGmv, ds:r=>r.bikSp, roas:a=>a.bikGmv/a.bikSp, rep:"Reported", inTotal:false}
+];
+let chanOn = {web:1, amz:1, blk:1, fc:1, tms:1, bik:0};
+
+/* ---------------- chart plumbing ---------------- */
+Chart.defaults.font.family = "'Archivo', system-ui, sans-serif";
+Chart.defaults.font.size = 11.5;
+Chart.defaults.color = "#42566A";
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.boxWidth = 8;
+Chart.defaults.plugins.legend.labels.padding = 14;
+Chart.defaults.plugins.tooltip.backgroundColor = "#0D1B2A";
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.cornerRadius = 6;
+Chart.defaults.plugins.tooltip.titleFont = {weight:"600", size:12.5};
+Chart.defaults.plugins.tooltip.bodyFont = {size:12};
+Chart.defaults.plugins.tooltip.boxPadding = 4;
+Chart.defaults.maintainAspectRatio = false;
+const GRID = {color:"#EBF0F4", drawTicks:false};
+const REG = {};
+function mk(id, cfg){ if(REG[id]) REG[id].destroy(); const el=document.getElementById(id); if(!el) return; REG[id]=new Chart(el.getContext("2d"), cfg); }
+const L = () => rows.map(r=>r.lbl);
+
+/* ---------------- helpers ---------------- */
+function kpi(o){
+  return '<div class="kpi acc-'+(o.acc||"brand")+'"><div class="k-l">'+o.l+'</div><div class="k-v '+(o.vc||"")+'">'+o.v+'</div><div class="k-f '+(o.fc||"")+'">'+(o.f||"")+'</div></div>';
+}
+function ins(o){
+  return '<details class="ins t-'+o.t+'"'+(o.open?" open":"")+'><summary>'+o.h+'<span class="chev">›</span></summary><div class="body">'+o.b+'</div></details>';
+}
+function tbl(head, body, foot){
+  return "<thead><tr>"+head.map(h=>"<th>"+h+"</th>").join("")+"</tr></thead><tbody>"+body+"</tbody>"+(foot?"<tfoot>"+foot+"</tfoot>":"");
+}
+function extremes(vals){                 // returns {hi:idx, lo:idx} ignoring nulls
+  let hi=-1, lo=-1;
+  vals.forEach((v,i)=>{ if(v===null||v===undefined||isNaN(v)) return;
+    if(hi<0||v>vals[hi]) hi=i; if(lo<0||v<vals[lo]) lo=i; });
+  return {hi,lo};
+}
+function hcell(v, i, ex, fmt, invert){
+  if(v===null||v===undefined) return '<td class="cell-na">Not Updated</td>';
+  let c=""; const hi = invert?ex.lo:ex.hi, lo = invert?ex.hi:ex.lo;
+  if(i===hi) c=" cell-hi"; else if(i===lo) c=" cell-lo";
+  return '<td class="'+c.trim()+'">'+fmt(v)+"</td>";
+}
+
+/* ==========================================================================
+   TAB 1 — EXECUTIVE OVERVIEW
+   ========================================================================== */
+function renderExec(){
+  // attainment tracks
+  const setTrack=(pre, plan, act, ach)=>{
+    const max = Math.max(plan, act)*1.10;
+    const fill = document.getElementById(pre+"Fill");
+    fill.style.width = Math.min(100, act/max*100)+"%";
+    fill.classList.toggle("over", ach>=1);
+    document.getElementById(pre+"Plan").style.left = (plan/max*100)+"%";
+    const p = document.getElementById(pre+"Pct");
+    p.textContent = pct(ach,1); p.className = "pctv "+(ach>=1?"pos":"neg");
+    document.getElementById(pre+"PlanV").textContent = moneyFull(plan);
+    document.getElementById(pre+"ActV").textContent = moneyFull(act);
+    const v = document.getElementById(pre+"Var");
+    v.textContent = (act-plan>=0?"+":"−")+"₹"+Math.abs(Math.round(act-plan)).toLocaleString("en-IN");
+    v.className = sgn(act-plan);
+  };
+  setTrack("heroDab", A.dPlan, A.dAct, A.dAch);
+  setTrack("heroTot", A.tPlan, A.tAct, A.tAch);
+  document.getElementById("heroDabSub").textContent = "Cumulative "+rows[0].lbl+"–"+rows[rows.length-1].lbl;
+  document.getElementById("heroTotSub").textContent = "Website + Amazon + BlinkIT + FirstCry + The Moms Store";
+
+  document.getElementById("heroRead").innerHTML =
+    "The website is <b>"+pct(A.dAch,1)+"</b> of plan (<b>+"+moneyFull(A.dVar)+"</b>), but the total business is only <b>"+pct(A.tAch,1)+"</b> (<b>"+(A.tVar>=0?"+":"−")+moneyFull(Math.abs(A.tVar)).replace("₹","₹")+"</b>). "+
+    "The gap is marketplaces: 3P revenue of <b>"+moneyFull(A.pAct)+"</b> against a plan of <b>"+moneyFull(A.pPlan)+"</b> is <b>"+pct(A.pAch,1)+"</b> of target, a shortfall of <b>"+moneyFull(Math.abs(A.pVar))+"</b>. "+
+    "Website overperformance is covering a marketplace miss rather than adding to it.";
+
+  // KPI row 1
+  document.getElementById("kpiRow1").innerHTML = [
+    kpi({acc:A.tAch>=1?"pos":"neg", l:"Total GMV (Dabble + 3P)", v:money(A.tAct), f:moneyFull(A.tAct)}),
+    kpi({acc:"plan", l:"Total GMV target", v:money(A.tPlan), f:moneyFull(A.tPlan)}),
+    kpi({acc:A.tAch>=1?"pos":"neg", l:"Overall achievement", v:pct(A.tAch,2), vc:A.tAch>=1?"pos":"neg", f:A.tAch>=1?"Ahead of plan":"Behind plan"}),
+    kpi({acc:A.tVar>=0?"pos":"neg", l:"Variance to plan", v:(A.tVar>=0?"+":"−")+money(Math.abs(A.tVar)), vc:sgn(A.tVar), f:moneyFull(A.tVar)})
+  ].join("");
+
+  document.getElementById("kpiRow2").innerHTML = [
+    kpi({acc:"brand", l:"Website GMV (Dabble)", v:money(A.dAct), f:pct(A.dAct/A.tAct,1)+" of total business"}),
+    kpi({acc:A.dAch>=1?"pos":"neg", l:"Website achievement", v:pct(A.dAch,2), vc:A.dAch>=1?"pos":"neg", f:(A.dVar>=0?"+":"−")+moneyFull(Math.abs(A.dVar))+" vs plan"}),
+    kpi({acc:A.pAch>=1?"pos":"neg", l:"3P / marketplace GMV", v:money(A.pAct), f:pct(A.pAct/A.tAct,1)+" of total business"}),
+    kpi({acc:A.pAch>=1?"pos":"neg", l:"3P achievement", v:pct(A.pAch,2), vc:A.pAch>=1?"pos":"neg", f:(A.pVar>=0?"+":"−")+moneyFull(Math.abs(A.pVar))+" vs plan"})
+  ].join("");
+
+  // top insights
+  const best = rows.reduce((b,r)=>r.tAct>b.tAct?r:b, rows[0]);
+  const exRows = rows.filter(r=>r!==best);
+  const exPlan = sum(exRows,r=>r.tPlan), exAct = sum(exRows,r=>r.tAct);
+  const shares = [
+    {n:"Amazon", v:A.amzTot}, {n:"Website", v:A.webGmv}, {n:"FirstCry", v:A.fcGmv},
+    {n:"BlinkIT", v:A.blkGmv}, {n:"The Moms Store", v:A.tmsGmv}
+  ].sort((x,y)=>y.v-x.v);
+  const worstConv = rows.reduce((w,r)=> (r.orders/r.traff) < (w.orders/w.traff) ? r : w, rows[0]);
+  const bestConv  = rows.reduce((w,r)=> (r.orders/r.traff) > (w.orders/w.traff) ? r : w, rows[0]);
+
+  document.getElementById("topInsights").innerHTML = [
+    ins({t:"neg", open:true, h:"Marketplaces are carrying the miss", b:
+      "<ul><li>3P revenue of <b>"+moneyFull(A.pAct)+"</b> lands at <b>"+pct(A.pAch,1)+"</b> of its <b>"+moneyFull(A.pPlan)+"</b> plan — a <b>"+moneyFull(Math.abs(A.pVar))+"</b> shortfall.</li>"+
+      "<li>3P cleared plan on <b>"+rows.filter(r=>(r.tAct-r.dAct)>=(r.tPlan-r.dPlan)).length+" of "+A.n+"</b> days.</li>"+
+      "<li>Website surplus of <b>+"+moneyFull(A.dVar)+"</b> offsets most of it, leaving the group at <b>"+pct(A.tAch,1)+"</b>.</li></ul>"}),
+    ins({t:"warn", open:true, h:"One day is holding up the period", b:
+      "<ul><li><b>"+best.lbl+"</b> delivered <b>"+moneyFull(best.tAct)+"</b> against a <b>"+moneyFull(best.tPlan)+"</b> plan — <b>"+pct(best.tAct/best.tPlan,0)+"</b>.</li>"+
+      "<li>Strip it out and the remaining "+exRows.length+" days sit at <b>"+pct(exAct/exPlan,1)+"</b> of plan, <b>"+moneyFull(Math.abs(exAct-exPlan))+"</b> "+(exAct>=exPlan?"ahead":"behind")+".</li>"+
+      "<li>That single day contributes <b>"+pct((best.dAct-best.dPlan)/A.dVar,0)+"</b> of the entire website surplus.</li></ul>"}),
+    ins({t:"brand", h:"Revenue is concentrated in one marketplace", b:
+      "<ul><li><b>"+shares[0].n+"</b> is <b>"+pct(shares[0].v/A.tAct,1)+"</b> of GMV at <b>"+moneyFull(shares[0].v)+"</b>; "+shares[1].n+" follows at <b>"+pct(shares[1].v/A.tAct,1)+"</b>.</li>"+
+      "<li>The remaining three channels together are <b>"+pct((shares[2].v+shares[3].v+shares[4].v)/A.tAct,1)+"</b> of GMV.</li>"+
+      "<li>Two channels account for <b>"+pct((shares[0].v+shares[1].v)/A.tAct,1)+"</b> of revenue — a real single-platform dependency.</li></ul>"}),
+    ins({t:"neg", h:"Website spend rose while conversion fell", b:
+      "<ul><li>Conversion moved from <b>"+pct(bestConv.orders/bestConv.traff,2)+"</b> on "+bestConv.lbl+" to <b>"+pct(worstConv.orders/worstConv.traff,2)+"</b> on "+worstConv.lbl+".</li>"+
+      "<li>On "+worstConv.lbl+" marketing spend was <b>"+moneyFull(worstConv.markSp)+"</b> — the highest in the period — on the highest traffic day ("+nf(worstConv.traff)+" visits) yet the fewest orders relative to traffic.</li>"+
+      "<li>Cost per order peaked at <b>"+moneyFull(worstConv.markSp/worstConv.orders)+"</b>, against a period average of <b>"+moneyFull(A.cpu)+"</b>.</li></ul>"}),
+    ins({t:"pos", h:"Website is genuinely ahead of plan", b:
+      "<ul><li>Website GMV <b>"+moneyFull(A.dAct)+"</b> vs plan <b>"+moneyFull(A.dPlan)+"</b> = <b>"+pct(A.dAch,1)+"</b>.</li>"+
+      "<li>It beat plan on <b>"+rows.filter(r=>r.dAct>=r.dPlan).length+" of "+A.n+"</b> days.</li>"+
+      "<li>Net revenue of <b>"+moneyFull(A.netRev)+"</b> is <b>"+pct(A.nrRatio,1)+"</b> of GMV, stable across every day in the period.</li></ul>"}),
+    ins({t:"warn", h:"Two cost lines are unusable as reported", b:
+      "<ul><li>BlinkIT spend and ROAS are marked <b>Not Update Yet</b> for "+rows.filter(r=>r.blkSp===null).map(r=>r.lbl).join(" and ")+", leaving <b>"+moneyFull(A.blkGmvUnknown)+"</b> of GMV with no cost attached.</li>"+
+      "<li>Google Ads records <b>₹0</b> spend and <b>0</b> ROAS on every day. This dashboard reports recorded spend as zero; it does not infer that the channel was switched off.</li></ul>"})
+  ].join("");
+
+  // achievement chart
+  mk("cAchDaily", {type:"line", data:{labels:L(), datasets:[
+    {label:"Dabble achievement", data:rows.map(r=>r.dAct/r.dPlan*100), borderColor:"#12496E", backgroundColor:"#12496E", tension:.3, borderWidth:2.5, pointRadius:4},
+    {label:"Dabble + 3P achievement", data:rows.map(r=>r.tAct/r.tPlan*100), borderColor:"#2C86BF", backgroundColor:"#2C86BF", tension:.3, borderWidth:2.5, pointRadius:4},
+    {label:"Plan (100%)", data:rows.map(()=>100), borderColor:"#A9761B", borderDash:[5,4], borderWidth:1.5, pointRadius:0}
+  ]}, options:{scales:{y:{grid:GRID, ticks:{callback:v=>v+"%"}}, x:{grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+": "+c.parsed.y.toFixed(1)+"%"}}}}});
+
+  // channel mix
+  const mixC = CH.filter(c=>c.inTotal && c.gmv(A)>0);
+  mk("cMix", {type:"doughnut", data:{labels:mixC.map(c=>c.n), datasets:[{
+    data:mixC.map(c=>c.gmv(A)), backgroundColor:mixC.map(c=>c.c), borderColor:"#fff", borderWidth:2}]},
+    options:{cutout:"58%", plugins:{legend:{position:"right"}, tooltip:{callbacks:{label:c=>c.label+": "+moneyFull(c.parsed)+" ("+(c.parsed/A.tAct*100).toFixed(1)+"%)"}}}}});
+}
+
+/* ==========================================================================
+   TAB 2 — TARGET VS ACTUAL
+   ========================================================================== */
+function renderTarget(){
+  mk("cTvA", {type:"bar", data:{labels:["Dabble (website)","3P / marketplace","Dabble + 3P"], datasets:[
+    {label:"Plan", data:[A.dPlan, A.pPlan, A.tPlan], backgroundColor:"#D9B96E", borderRadius:3},
+    {label:"Actual", data:[A.dAct, A.pAct, A.tAct], backgroundColor:"#12496E", borderRadius:3}
+  ]}, options:{scales:{y:{grid:GRID, ticks:{callback:v=>money(v)}}, x:{grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+": "+moneyFull(c.parsed.y),
+      afterBody:it=>{const i=it[0].dataIndex, p=[A.dPlan,A.pPlan,A.tPlan][i], a=[A.dAct,A.pAct,A.tAct][i];
+        return "Achievement: "+(a/p*100).toFixed(1)+"%";}}}}}});
+
+  const srow = (n,p,a)=>{const ach=a/p, v=a-p;
+    return "<tr><td>"+n+"</td><td>"+moneyFull(p)+"</td><td>"+moneyFull(a)+"</td><td class='"+(ach>=1?"pos":"neg")+"'>"+pct(ach,2)+"</td><td class='"+sgn(v)+"'>"+(v>=0?"+":"−")+moneyFull(Math.abs(v))+"</td></tr>";};
+  document.getElementById("tSplit").innerHTML = tbl(["Segment","Plan","Actual","Achievement","Variance"],
+    srow("Dabble (website)",A.dPlan,A.dAct)+srow("3P / marketplace",A.pPlan,A.pAct),
+    srow("Dabble + 3P",A.tPlan,A.tAct));
+
+  mk("cTvADaily", {type:"bar", data:{labels:L(), datasets:[
+    {label:"Dabble plan", data:rows.map(r=>r.dPlan), backgroundColor:"#E3CB94", borderRadius:2, stack:"d"},
+    {label:"Dabble actual", data:rows.map(r=>r.dAct), backgroundColor:"#12496E", borderRadius:2, stack:"a"},
+    {label:"Dabble + 3P plan", data:rows.map(r=>r.tPlan), backgroundColor:"#D9B96E", borderRadius:2, stack:"d"},
+    {label:"Dabble + 3P actual", data:rows.map(r=>r.tAct), backgroundColor:"#2C86BF", borderRadius:2, stack:"a"},
+    {type:"line", label:"Dabble + 3P achievement", data:rows.map(r=>r.tAct/r.tPlan*100), yAxisID:"y1",
+     borderColor:"#B3261E", backgroundColor:"#B3261E", borderWidth:2, pointRadius:3.5, tension:.3}
+  ]}, options:{scales:{
+      y:{stacked:false, grid:GRID, ticks:{callback:v=>money(v)}, title:{display:true, text:"GMV"}},
+      y1:{position:"right", grid:{display:false}, ticks:{callback:v=>v+"%"}, title:{display:true, text:"Achievement"}},
+      x:{grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+": "+(c.dataset.yAxisID==="y1"?c.parsed.y.toFixed(1)+"%":moneyFull(c.parsed.y))}}}}});
+
+  const body = rows.map(r=>{
+    const dv=r.dAct-r.dPlan, tv=r.tAct-r.tPlan, da=r.dAct/r.dPlan, ta=r.tAct/r.tPlan;
+    return "<tr><td>"+r.lbl+" · "+r.dow+"</td><td class='muted'>"+r.ev+"</td>"+
+      "<td>"+moneyFull(r.dPlan)+"</td><td>"+moneyFull(r.dAct)+"</td>"+
+      "<td class='"+(da>=1?"pos":"neg")+"'>"+pct(da,0)+"</td><td class='"+sgn(dv)+"'>"+(dv>=0?"+":"−")+moneyFull(Math.abs(dv))+"</td>"+
+      "<td>"+moneyFull(r.tPlan)+"</td><td>"+moneyFull(r.tAct)+"</td>"+
+      "<td class='"+(ta>=1?"pos":"neg")+"'>"+pct(ta,0)+"</td><td class='"+sgn(tv)+"'>"+(tv>=0?"+":"−")+moneyFull(Math.abs(tv))+"</td></tr>";
+  }).join("");
+  const ft = "<tr><td>Total</td><td></td><td>"+moneyFull(A.dPlan)+"</td><td>"+moneyFull(A.dAct)+"</td><td class='"+(A.dAch>=1?"pos":"neg")+"'>"+pct(A.dAch,0)+"</td><td class='"+sgn(A.dVar)+"'>+"+moneyFull(A.dVar)+"</td><td>"+moneyFull(A.tPlan)+"</td><td>"+moneyFull(A.tAct)+"</td><td class='"+(A.tAch>=1?"pos":"neg")+"'>"+pct(A.tAch,0)+"</td><td class='"+sgn(A.tVar)+"'>"+(A.tVar>=0?"+":"−")+moneyFull(Math.abs(A.tVar))+"</td></tr>";
+  document.getElementById("tTvADaily").innerHTML = tbl(
+    ["Date","Context","Dabble plan","Dabble actual","Ach.","Variance","D+3P plan","D+3P actual","Ach.","Variance"], body, ft);
+
+  // diagnosis cards
+  const byAct = [...rows].sort((a,b)=>b.tAct-a.tAct);
+  const byVar = [...rows].sort((a,b)=>(b.tAct-b.tPlan)-(a.tAct-a.tPlan));
+  const dBeat = rows.filter(r=>r.dAct>=r.dPlan), tMiss = rows.filter(r=>r.tAct<r.tPlan);
+  document.getElementById("diagCards").innerHTML = [
+    kpi({acc:"pos", l:"Strongest day (GMV)", v:byAct[0].lbl, f:moneyFull(byAct[0].tAct)+" · "+pct(byAct[0].tAct/byAct[0].tPlan,0)+" of plan"}),
+    kpi({acc:"neg", l:"Weakest day (GMV)", v:byAct[byAct.length-1].lbl, f:moneyFull(byAct[byAct.length-1].tAct)+" · "+pct(byAct[byAct.length-1].tAct/byAct[byAct.length-1].tPlan,0)+" of plan"}),
+    kpi({acc:"pos", l:"Largest positive variance", v:"+"+money(byVar[0].tAct-byVar[0].tPlan), vc:"pos", f:byVar[0].lbl+" · "+moneyFull(byVar[0].tAct-byVar[0].tPlan)}),
+    kpi({acc:"neg", l:"Largest negative variance", v:"−"+money(Math.abs(byVar[byVar.length-1].tAct-byVar[byVar.length-1].tPlan)), vc:"neg", f:byVar[byVar.length-1].lbl+" · "+moneyFull(byVar[byVar.length-1].tAct-byVar[byVar.length-1].tPlan)}),
+    kpi({acc:"brand", l:"Days Dabble beat plan", v:dBeat.length+" of "+A.n, f:dBeat.map(r=>r.lbl).join(", ")||"None"}),
+    kpi({acc:"neg", l:"Days Dabble + 3P missed plan", v:tMiss.length+" of "+A.n, f:tMiss.map(r=>r.lbl).join(", ")||"None"}),
+    kpi({acc:"warn", l:"Days 3P missed plan", v:rows.filter(r=>(r.tAct-r.dAct)<(r.tPlan-r.dPlan)).length+" of "+A.n, f:"3P beat plan only on "+(rows.filter(r=>(r.tAct-r.dAct)>=(r.tPlan-r.dPlan)).map(r=>r.lbl).join(", ")||"no day")}),
+    kpi({acc:"plan", l:"Best 3P day vs plan", v:pct(Math.max(...rows.map(r=>(r.tAct-r.dAct)/(r.tPlan-r.dPlan))),1), f:"3P never materially exceeded its daily plan"})
+  ].join("");
+
+  // Sep 6 (peak day) deep box
+  const peak = byAct[0], pi = rows.indexOf(peak), prev = pi>0 ? rows[pi-1] : null;
+  const restVar = rows.filter(r=>r!==peak).reduce((t,r)=>t+(r.tAct-r.tPlan),0);
+  let h = "<div class='grid g4' style='margin-bottom:14px'>"+[
+    kpi({acc:"pos", l:"Website achievement on "+peak.lbl, v:pct(peak.dAct/peak.dPlan,0), vc:"pos", f:moneyFull(peak.dAct)+" against a "+moneyFull(peak.dPlan)+" plan"}),
+    kpi({acc:"brand", l:"Share of website surplus", v:pct((peak.dAct-peak.dPlan)/A.dVar,0), f:"of the "+moneyFull(A.dVar)+" total website beat"}),
+    kpi({acc:restVar>=0?"pos":"neg", l:"Rest of period vs plan", v:(restVar>=0?"+":"−")+money(Math.abs(restVar)), vc:sgn(restVar), f:"Excluding "+peak.lbl+", the business was "+(restVar>=0?"ahead of":"behind")+" plan"}),
+    kpi({acc:"warn", l:"Basket size on "+peak.lbl, v:moneyFull(peak.dAct/peak.orders), f:prev?("vs "+moneyFull(prev.dAct/prev.orders)+" on "+prev.lbl):"—"})
+  ].join("")+"</div>";
+  h += "<div class='callout warnc'><b>Observation.</b> "+peak.lbl+" produced "+moneyFull(peak.tAct)+", the highest day in the period, on the "+
+    (peak.traff===Math.min(...rows.map(r=>r.traff))?"<b>lowest</b>":"")+" website traffic day ("+nf(peak.traff)+" visits) and only "+peak.orders+" orders. "+
+    "Website GMV rose "+moneyFull(peak.dAct-(prev?prev.dAct:0))+" day over day while Amazon fell "+moneyFull(Math.abs(peak.amzTot-(prev?prev.amzTot:0)))+", BlinkIT fell "+moneyFull(Math.abs(peak.blkGmv-(prev?prev.blkGmv:0)))+" and FirstCry fell "+moneyFull(Math.abs(peak.fcGmv-(prev?prev.fcGmv:0)))+". "+
+    "Paid sale was "+moneyFull(peak.webPaid)+" — only "+pct(peak.webPaid/peak.dAct,0)+" of website GMV, against "+pct(prev?prev.webPaid/prev.dAct:0,0)+" the day before.<br><br>"+
+    "<b>Interpretation.</b> The uplift is basket-size driven, not demand driven: order count barely moved ("+ (prev?prev.orders:"—") +" → "+peak.orders+") while average order value went from "+moneyFull(prev?prev.dAct/prev.orders:0)+" to "+moneyFull(peak.dAct/peak.orders)+". "+
+    "The reported new-buyer AOV of "+moneyFull(peak.nbAov)+" on "+peak.lbl+" is roughly "+ (peak.nbAov/(rows.filter(r=>r!==peak).reduce((t,r)=>t+r.nbAov,0)/(rows.length-1))).toFixed(1) +"x the average of the other days. "+
+    "Because the increase sits outside paid sale and inside a handful of high-value new-buyer orders, it should be verified as genuine consumer demand — for example a bulk or B2B-style order — before it is treated as a repeatable run rate.</div>";
+  document.getElementById("sep6Box").innerHTML = h;
+}
+
+/* ==========================================================================
+   TAB 3 — WEBSITE FUNNEL
+   ========================================================================== */
+let volSel = {traff:1, atc:1, orders:1}, rateSel = "conv";
+function renderFunnel(){
+  const steps = [
+    {l:"Traffic", v:A.traff, d:nf(A.traff)+" visits", w:1},
+    {l:"Add to cart", v:A.atc, d:nf(A.atc)+" carts", w:A.atc/A.traff},
+    {l:"Orders", v:A.orders, d:nf(A.orders)+" orders", w:A.orders/A.traff},
+    {l:"GMV", v:A.gmv, d:moneyFull(A.gmv), w:Math.max(.16, A.orders/A.traff)}
+  ];
+  const drops = [
+    "ATC rate <b>"+pct(A.atcRate,2)+"</b> — "+nf(A.traff-A.atc)+" visits left without adding to cart",
+    "Cart to order <b>"+pct(A.a2o,1)+"</b> — "+nf(A.atc-A.orders)+" carts did not convert",
+    "AOV <b>"+moneyFull(A.aov)+"</b> per order · revenue per visitor <b>"+moneyFull(A.rpv)+"</b>"
+  ];
+  let fh = "";
+  steps.forEach((s,i)=>{
+    fh += '<div class="fstep"><div class="fbar" style="width:'+(s.w*100).toFixed(1)+'%"></div><div class="fin"><span class="fl" style="color:'+(s.w>.45?"#fff":"var(--ink)")+'">'+s.l+'</span><span class="fv" style="color:'+(s.w>.85?"#fff":"var(--ink)")+'">'+s.d+'</span></div></div>';
+    if(drops[i]) fh += '<div class="fdrop">↓ '+drops[i]+'</div>';
+  });
+  document.getElementById("funnelBox").innerHTML = fh;
+
+  document.getElementById("funnelMini").innerHTML = [
+    ["ATC rate", pct(A.atcRate,2), "ATC ÷ traffic"],
+    ["Conversion rate", pct(A.conv,2), "orders ÷ traffic"],
+    ["Cart to order", pct(A.a2o,1), "orders ÷ ATC"],
+    ["AOV", moneyFull(A.aov), "GMV ÷ orders"],
+    ["Revenue per visitor", moneyFull(A.rpv), "GMV ÷ traffic"],
+    ["Orders", nf(A.orders), "over "+A.n+" days"]
+  ].map(m=>'<div><div class="m-l">'+m[0]+'</div><div class="m-v">'+m[1]+'</div><div class="m-f">'+m[2]+'</div></div>').join("");
+
+  mk("cFunnelRates", {type:"line", data:{labels:L(), datasets:[
+    {label:"ATC rate", data:rows.map(r=>r.atc/r.traff*100), borderColor:"#2C86BF", backgroundColor:"#2C86BF", tension:.3, borderWidth:2.5, pointRadius:3.5},
+    {label:"Conversion rate", data:rows.map(r=>r.orders/r.traff*100), borderColor:"#12496E", backgroundColor:"#12496E", tension:.3, borderWidth:2.5, pointRadius:3.5},
+    {label:"Cart to order", data:rows.map(r=>r.orders/r.atc*100), borderColor:"#A9761B", backgroundColor:"#A9761B", tension:.3, borderWidth:2, borderDash:[4,3], pointRadius:3}
+  ]}, options:{scales:{y:{grid:GRID, ticks:{callback:v=>v+"%"}}, x:{grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+": "+c.parsed.y.toFixed(2)+"%"}}}}});
+
+  // toggle chips
+  const vol = [["traff","Traffic"],["atc","Add to cart"],["orders","Orders"]];
+  const rate = [["conv","Conversion %"],["atcr","ATC rate %"],["aov","AOV ₹"],["rpv","Revenue per visitor ₹"],["gmv","GMV ₹"]];
+  document.getElementById("funnelToggle").innerHTML =
+    '<span class="muted" style="font-size:12px">Volume (left axis)</span>'+
+    vol.map(v=>'<button class="chip" data-vol="'+v[0]+'" aria-pressed="'+(volSel[v[0]]?"true":"false")+'">'+v[1]+'</button>').join("")+
+    '<span class="muted" style="font-size:12px; margin-left:10px">Compare with (right axis)</span>'+
+    rate.map(v=>'<button class="chip" data-rate="'+v[0]+'" aria-pressed="'+(rateSel===v[0]?"true":"false")+'">'+v[1]+'</button>').join("");
+  document.querySelectorAll("[data-vol]").forEach(b=>b.onclick=()=>{const k=b.dataset.vol;
+    if(volSel[k] && Object.values(volSel).filter(Boolean).length===1) return; volSel[k]=volSel[k]?0:1; renderFunnel();});
+  document.querySelectorAll("[data-rate]").forEach(b=>b.onclick=()=>{rateSel=b.dataset.rate; renderFunnel();});
+
+  const rMap = {
+    conv:{l:"Conversion %", f:r=>r.orders/r.traff*100, fm:v=>v.toFixed(2)+"%"},
+    atcr:{l:"ATC rate %",   f:r=>r.atc/r.traff*100,   fm:v=>v.toFixed(2)+"%"},
+    aov:{l:"AOV ₹",         f:r=>r.dAct/r.orders,     fm:v=>moneyFull(v)},
+    rpv:{l:"Revenue per visitor ₹", f:r=>r.dAct/r.traff, fm:v=>moneyFull(v)},
+    gmv:{l:"GMV ₹",         f:r=>r.dAct,              fm:v=>moneyFull(v)}
+  };
+  const vMap = {traff:{l:"Traffic",c:"#9CC3DD"}, atc:{l:"Add to cart",c:"#2C86BF"}, orders:{l:"Orders",c:"#12496E"}};
+  const ds = Object.keys(volSel).filter(k=>volSel[k]).map(k=>({
+    type:"bar", label:vMap[k].l, data:rows.map(r=>r[k]), backgroundColor:vMap[k].c, borderRadius:3, yAxisID:"y"}));
+  ds.push({type:"line", label:rMap[rateSel].l, data:rows.map(rMap[rateSel].f), yAxisID:"y1",
+    borderColor:"#B3261E", backgroundColor:"#B3261E", borderWidth:2.5, pointRadius:4, tension:.3});
+  mk("cFunnelDaily", {data:{labels:L(), datasets:ds}, options:{
+    scales:{y:{grid:GRID, title:{display:true, text:"Count"}}, y1:{position:"right", grid:{display:false},
+      ticks:{callback:v=>rMap[rateSel].fm(v)}, title:{display:true, text:rMap[rateSel].l}}, x:{grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>c.dataset.yAxisID==="y1" ? c.dataset.label+": "+rMap[rateSel].fm(c.parsed.y) : c.dataset.label+": "+nf(c.parsed.y)}}}}});
+
+  // diagnosis
+  const f=rows[0], l=rows[rows.length-1];
+  const trD=(l.traff-f.traff)/f.traff, cvD=(l.orders/l.traff)-(f.orders/f.traff);
+  const aovD=((l.dAct/l.orders)-(f.dAct/f.orders))/(f.dAct/f.orders);
+  const gmvD=(l.dAct-f.dAct)/f.dAct;
+  const mid = rows.slice(0,-1);
+  const midG = (mid[mid.length-1].dAct-mid[0].dAct)/mid[0].dAct;
+  const peakTr = extremes(rows.map(r=>r.traff));
+  document.getElementById("funnelDiag").innerHTML = [
+    ins({t:"neg", open:true, h:"Traffic is falling, not growing", b:
+      "<ul><li>Traffic peaked at <b>"+nf(rows[peakTr.hi].traff)+"</b> on "+rows[peakTr.hi].lbl+" and closed at <b>"+nf(l.traff)+"</b> on "+l.lbl+" — a <b>"+pctp((l.traff-rows[peakTr.hi].traff)/rows[peakTr.hi].traff,1)+"</b> move.</li>"+
+      "<li>Across the period traffic moved <b>"+pctp(trD,1)+"</b> from "+f.lbl+" to "+l.lbl+".</li>"+
+      "<li>Add-to-cart volume fell in step, from <b>"+nf(f.atc)+"</b> to <b>"+nf(l.atc)+"</b>.</li></ul>"}),
+    ins({t:"warn", open:true, h:"Conversion dipped mid-week, then recovered", b:
+      "<ul><li>Conversion ran <b>"+pct(f.orders/f.traff,2)+"</b> → <b>"+pct(rows[3]?rows[3].orders/rows[3].traff:0,2)+"</b> → <b>"+pct(l.orders/l.traff,2)+"</b>.</li>"+
+      "<li>The trough coincides with the highest traffic and the highest marketing spend of the period, which points to lower-quality incremental traffic rather than a site problem — though the workbook holds no source or campaign detail to confirm that.</li>"+
+      "<li>Cart-to-order held between <b>"+pct(Math.min(...rows.map(r=>r.orders/r.atc)),1)+"</b> and <b>"+pct(Math.max(...rows.map(r=>r.orders/r.atc)),1)+"</b>, so the weakness sits before the cart, not at checkout.</li></ul>"}),
+    ins({t:"brand", h:"GMV movement is AOV-led, not traffic-led", b:
+      "<ul><li>Traffic <b>"+pctp(trD,1)+"</b>, orders <b>"+pctp((l.orders-f.orders)/f.orders,1)+"</b>, AOV <b>"+pctp(aovD,0)+"</b> — but GMV <b>"+pctp(gmvD,0)+"</b>.</li>"+
+      "<li>With traffic and orders both down, the entire GMV increase is explained by basket size.</li>"+
+      "<li>Excluding the final day, GMV was <b>"+pctp(midG,1)+"</b> across "+mid.length+" days on falling conversion — the underlying trend was negative before the last-day spike.</li></ul>"}),
+    ins({t:"warn", h:"Revenue per visitor tells the cleanest story", b:
+      "<ul><li>Revenue per visitor: <b>"+moneyFull(f.dAct/f.traff)+"</b> on "+f.lbl+", bottoming at <b>"+moneyFull(Math.min(...mid.map(r=>r.dAct/r.traff)))+"</b>, then <b>"+moneyFull(l.dAct/l.traff)+"</b> on "+l.lbl+".</li>"+
+      "<li>Period average is <b>"+moneyFull(A.rpv)+"</b>. Only the last day sits above it, so five of "+A.n+" days monetised traffic below the period average.</li></ul>"})
+  ].join("");
+
+  // returning vs new
+  const seg=(n,tr,cv,ord,aov,sp,cpu,gmvI)=>"<tr><td>"+n+"</td><td>"+nf(tr)+"</td><td>"+pct(cv,2)+"</td><td>"+nf(ord)+"</td><td>"+pct(ord/A.orders,1)+"</td><td>"+moneyFull(aov)+"</td><td>"+moneyFull(gmvI)+"</td><td>"+moneyFull(sp)+"</td><td>"+moneyFull(cpu)+"</td></tr>";
+  document.getElementById("tRbNb").innerHTML = tbl(
+    ["Segment","Traffic","Conversion","Orders","Order share","AOV","Implied GMV","Spend","Cost per order"],
+    seg("Returning",A.rbTr,A.rbConv,A.rbOrd,A.rbAov,A.rbSp,A.rbCpu,A.rbGmvI)+
+    seg("New",A.nbTr,A.nbConv,A.nbOrd,A.nbAov,A.nbSp,A.nbCpu,A.nbGmvI),
+    "<tr><td>Identified total</td><td>"+nf(A.trAttrib)+"</td><td>"+pct(A.orders/A.trAttrib,2)+"</td><td>"+nf(A.orders)+"</td><td>100.0%</td><td>"+moneyFull(A.aov)+"</td><td>"+moneyFull(A.rbGmvI+A.nbGmvI)+"</td><td>"+moneyFull(A.rbSp+A.nbSp)+"</td><td>"+moneyFull((A.rbSp+A.nbSp)/A.orders)+"</td></tr>");
+  document.getElementById("rbnbNote").innerHTML =
+    "Returning visitors convert at <b>"+pct(A.rbConv,2)+"</b> against <b>"+pct(A.nbConv,2)+"</b> for new — <b>"+(A.rbConv/A.nbConv).toFixed(2)+"x</b> better — but new buyers place <b>"+pct(A.nbOrd/A.orders,0)+"</b> of orders. "+
+    "The site is acquisition-led on volume and repeat-led on efficiency.<br><br>"+
+    "<b>Two source caveats.</b> Returning plus new traffic is <b>"+nf(A.trAttrib)+"</b> against a total of <b>"+nf(A.traff)+"</b>, leaving <b>"+nf(A.trGap)+"</b> visits ("+pct(A.trGap/A.traff,1)+") unattributed to a segment; segment conversion rates are therefore computed on identified traffic only. Implied GMV is segment AOV × segment orders and does not tie exactly to total GMV, so it is directional. "+
+    "Separately, recorded new-buyer cost per order (<b>"+moneyFull(A.nbCpu)+"</b>) is <i>below</i> returning-buyer cost per order (<b>"+moneyFull(A.rbCpu)+"</b>), which is the reverse of the usual pattern and worth confirming against the spend-tagging logic before it is acted on.";
+
+  mk("cRbNb", {type:"bar", data:{labels:["Traffic share","Order share","Conversion (indexed)","AOV (indexed)"], datasets:[
+    {label:"Returning", data:[A.rbTr/A.trAttrib*100, A.rbOrd/A.orders*100, A.rbConv/(A.rbConv+A.nbConv)*100, A.rbAov/(A.rbAov+A.nbAov)*100], backgroundColor:"#12496E", borderRadius:3},
+    {label:"New", data:[A.nbTr/A.trAttrib*100, A.nbOrd/A.orders*100, A.nbConv/(A.rbConv+A.nbConv)*100, A.nbAov/(A.rbAov+A.nbAov)*100], backgroundColor:"#A9761B", borderRadius:3}
+  ]}, options:{indexAxis:"y", scales:{x:{stacked:true, grid:GRID, max:100, ticks:{callback:v=>v+"%"}}, y:{stacked:true, grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+": "+c.parsed.x.toFixed(1)+"% of the pair"}}}}});
+
+  // profitability
+  const mx = extremes(rows.map(r=>r.markPct));
+  document.getElementById("profitKpis").innerHTML = [
+    kpi({acc:"brand", l:"Net revenue", v:money(A.netRev), f:pct(A.nrRatio,1)+" of website GMV"}),
+    kpi({acc:"warn", l:"Marketing spend ÷ GMV", v:pct(A.spOverGmv,1), f:moneyFull(A.markSp)+" of media on "+moneyFull(A.gmv)+" GMV"}),
+    kpi({acc:"warn", l:"Marketing spend ÷ net revenue", v:pct(A.spOverNr,1), f:"Nearly half of net revenue goes to media"}),
+    kpi({acc:"neg", l:"Cost per order", v:moneyFull(A.cpu), f:"Range "+moneyFull(Math.min(...rows.map(r=>r.markSp/r.orders)))+" to "+moneyFull(Math.max(...rows.map(r=>r.markSp/r.orders)))}),
+    kpi({acc:"neg", l:"Highest marketing intensity", v:rows[mx.hi].lbl, f:pct(rows[mx.hi].markPct,1)+" of GMV · "+moneyFull(rows[mx.hi].markSp)}),
+    kpi({acc:"pos", l:"Lowest marketing intensity", v:rows[mx.lo].lbl, f:pct(rows[mx.lo].markPct,1)+" of GMV · "+moneyFull(rows[mx.lo].markSp)}),
+    kpi({acc:"pos", l:"Strongest profitability day", v:rows[extremes(rows.map(r=>r.pm)).hi].lbl, f:"PM% "+pct(rows[extremes(rows.map(r=>r.pm)).hi].pm,2)+" as reported"}),
+    kpi({acc:"neg", l:"Weakest profitability day", v:rows[extremes(rows.map(r=>r.pm)).lo].lbl, f:"PM% "+pct(rows[extremes(rows.map(r=>r.pm)).lo].pm,2)+" as reported"})
+  ].join("");
+
+  mk("cProfit", {type:"bar", data:{labels:L(), datasets:[
+    {label:"Marketing spend", data:rows.map(r=>r.markSp), backgroundColor:"#9CC3DD", borderRadius:3, yAxisID:"y", order:3},
+    {label:"Website GMV", data:rows.map(r=>r.dAct), backgroundColor:"#12496E", borderRadius:3, yAxisID:"y", order:2},
+    {type:"line", label:"Marketing % of GMV", data:rows.map(r=>r.markPct*100), yAxisID:"y1", borderColor:"#B3261E", backgroundColor:"#B3261E", borderWidth:2.5, pointRadius:4, tension:.3, order:1},
+    {type:"line", label:"Cost per order", data:rows.map(r=>r.markSp/r.orders), yAxisID:"y2", borderColor:"#A9761B", backgroundColor:"#A9761B", borderWidth:2, borderDash:[5,4], pointRadius:3.5, tension:.3, order:0}
+  ]}, options:{scales:{
+      y:{grid:GRID, ticks:{callback:v=>money(v)}},
+      y1:{position:"right", grid:{display:false}, ticks:{callback:v=>v.toFixed(0)+"%"}, max:80},
+      y2:{display:false},
+      x:{grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>{
+      if(c.dataset.yAxisID==="y1") return c.dataset.label+": "+c.parsed.y.toFixed(1)+"%";
+      return c.dataset.label+": "+moneyFull(c.parsed.y);}}}}}});
+
+  const pex = {cpu:extremes(rows.map(r=>r.markSp/r.orders)), mk:extremes(rows.map(r=>r.markPct)),
+               nr:extremes(rows.map(r=>r.netRev/r.dAct)), pm:extremes(rows.map(r=>r.pm))};
+  document.getElementById("tProfit").innerHTML = tbl(
+    ["Date","GMV","Net revenue","Net rev ÷ GMV","Marketing spend","Marketing % of GMV","Spend ÷ net rev","Cost per order","PM% (reported)","Promo% (reported)"],
+    rows.map((r,i)=>"<tr><td>"+r.lbl+"</td><td>"+moneyFull(r.dAct)+"</td><td>"+moneyFull(r.netRev)+"</td>"+
+      hcell(r.netRev/r.dAct,i,pex.nr,v=>pct(v,1))+
+      "<td>"+moneyFull(r.markSp)+"</td>"+
+      hcell(r.markPct,i,pex.mk,v=>pct(v,1),true)+
+      "<td>"+pct(r.markSp/r.netRev,1)+"</td>"+
+      hcell(r.markSp/r.orders,i,pex.cpu,v=>moneyFull(v),true)+
+      hcell(r.pm,i,pex.pm,v=>pct(v,2))+
+      "<td>"+pct(r.promo,2)+"</td></tr>").join(""),
+    "<tr><td>Total</td><td>"+moneyFull(A.gmv)+"</td><td>"+moneyFull(A.netRev)+"</td><td>"+pct(A.nrRatio,1)+"</td><td>"+moneyFull(A.markSp)+"</td><td>"+pct(A.spOverGmv,1)+"</td><td>"+pct(A.spOverNr,1)+"</td><td>"+moneyFull(A.cpu)+"</td><td>—</td><td>—</td></tr>");
+}
+
+/* ==========================================================================
+   TAB 4 — CHANNEL PERFORMANCE
+   ========================================================================== */
+function renderChannel(){
+  document.getElementById("chanFilter").innerHTML =
+    '<span class="muted" style="font-size:12px">Channels</span>'+
+    CH.map(c=>'<button class="chip" data-ch="'+c.k+'" aria-pressed="'+(chanOn[c.k]?"true":"false")+'">'+c.n+'</button>').join("");
+  document.querySelectorAll("[data-ch]").forEach(b=>b.onclick=()=>{chanOn[b.dataset.ch]=chanOn[b.dataset.ch]?0:1; renderChannel();});
+
+  const on = CH.filter(c=>chanOn[c.k]);
+  const ranked = [...on].sort((a,b)=>b.gmv(A)-a.gmv(A));
+  const body = ranked.map(c=>{
+    const g=c.gmv(A), s=c.sp(A), first=c.d(rows[0]), last=c.d(rows[rows.length-1]);
+    const gr = first ? (last-first)/first : null;
+    const bl = c.roas(A);
+    return "<tr><td>"+c.n+(c.inTotal?"":' <span class="badge b-brand">in website</span>')+"</td>"+
+      "<td>"+moneyFull(g)+"</td>"+
+      "<td>"+(c.inTotal?pct(g/A.tAct,1):'<span class="muted">n/a</span>')+"</td>"+
+      "<td>"+(s===null||s===0?'<span class="muted">'+(s===0?"₹0 recorded":"Not recorded")+'</span>':moneyFull(s))+"</td>"+
+      "<td>"+(s?pct(s/g,1):'<span class="muted">—</span>')+"</td>"+
+      "<td>"+(bl===null||!isFinite(bl)?'<span class="muted">—</span>':rx(bl))+"</td>"+
+      "<td class='"+(gr===null?"":sgn(gr))+"'>"+(gr===null?"—":pctp(gr,1))+"</td></tr>";
+  }).join("");
+  const inTot = on.filter(c=>c.inTotal);
+  const tg = sum(inTot,c=>c.gmv(A)), ts = sum(inTot,c=>c.sp(A)||0);
+  const foot = inTot.length
+    ? "<tr><td>Selected channels (excl. BIK)</td><td>"+moneyFull(tg)+"</td><td>"+pct(tg/A.tAct,1)+"</td><td>"+moneyFull(ts)+"</td><td>"+(ts?pct(ts/tg,1):"—")+"</td><td>"+(ts?rx(tg/ts):"—")+"</td><td>—</td></tr>"
+    : "";
+  document.getElementById("tChan").innerHTML = tbl(
+    ["Channel","GMV","Share of total GMV","Recorded spend","Spend ÷ GMV","Blended ROAS","First → last day"],
+    body || '<tr><td colspan="7" class="muted" style="text-align:left;padding:18px 10px">No channels selected. Pick at least one channel above to see the matrix.</td></tr>',
+    foot);
+
+  document.getElementById("chanNote").innerHTML =
+    "Ranked by GMV contribution. Blended ROAS is channel GMV ÷ recorded spend; it includes organic and repeat demand and so runs above platform-attributed ROAS. "+
+    "BIK GMV sits <b>inside</b> website GMV — the column header in the source says so — and is shown for visibility only, excluded from the contribution total.<br><br>"+
+    "<b>Two spend definitions.</b> Website spend here is the workbook's Website Ads Spends line (<b>"+moneyFull(A.webAds)+"</b>), which is the site's combined media total. The Spend &amp; ROAS tab builds spend up from individual platforms (Meta <b>"+moneyFull(A.metaSp)+"</b> + BIK <b>"+moneyFull(A.bikSp)+"</b> = <b>"+moneyFull(A.metaSp+A.bikSp)+"</b>), which is <b>"+moneyFull(Math.abs(A.metaSp+A.bikSp-A.webAds))+"</b> higher. "+
+    "The difference traces to BIK spend appearing in the Website Ads Spends column on the wrong row in the source. Both views are shown rather than one being silently picked. "+
+    "BlinkIT ROAS uses only the "+A.blkSpDays+" days with recorded spend.";
+
+  mk("cChanStack", {type:"bar", data:{labels:L(), datasets:on.filter(c=>c.inTotal).map(c=>({
+    label:c.n, data:rows.map(c.d), backgroundColor:c.c, borderRadius:2}))},
+    options:{scales:{x:{stacked:true, grid:{display:false}}, y:{stacked:true, grid:GRID, ticks:{callback:v=>money(v)}}},
+      plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+": "+moneyFull(c.parsed.y),
+        footer:it=>"Day total: "+moneyFull(it.reduce((t,i)=>t+i.parsed.y,0))}}}}});
+
+  // rankings
+  const gmvR = [...CH].filter(c=>c.inTotal).sort((a,b)=>b.gmv(A)-a.gmv(A));
+  const growR = [...CH].filter(c=>c.inTotal).map(c=>({c, d:c.d(rows[rows.length-1])-c.d(rows[0])})).sort((a,b)=>b.d-a.d);
+  const roasR = [...CH].map(c=>({c, v:c.roas(A)})).filter(o=>o.v!==null && isFinite(o.v)).sort((a,b)=>b.v-a.v);
+  const spR  = [...CH].map(c=>({c, v:c.sp(A)})).filter(o=>o.v!==null && o.v>0).sort((a,b)=>b.v-a.v);
+  const lst = (t,q,items) => '<div style="margin-bottom:16px"><div style="font-size:13px;font-weight:600">'+t+'</div><div style="font-size:12px;color:var(--ink-3);margin-bottom:8px">'+q+'</div>'+
+    items.map((s,i)=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line-2);font-size:12.5px"><span><span class="muted">'+(i+1)+'</span> &nbsp;'+s[0]+'</span><b>'+s[1]+'</b></div>').join("")+'</div>';
+  document.getElementById("rankBox").innerHTML =
+    lst("By GMV contribution","The ranking that should drive attention.", gmvR.map(c=>[c.n, moneyFull(c.gmv(A))+" · "+pct(c.gmv(A)/A.tAct,1)])) +
+    lst("By growth contribution","Rupee change from "+rows[0].lbl+" to "+rows[rows.length-1].lbl+".", growR.map(o=>[o.c.n, (o.d>=0?"+":"−")+moneyFull(Math.abs(o.d))])) +
+    lst("By blended ROAS","GMV ÷ recorded spend. Read alongside size, not instead of it.", roasR.map(o=>[o.c.n, rx(o.v)])) +
+    lst("By recorded spend","Where the budget actually sits.", spR.map(o=>[o.c.n, moneyFull(o.v)+" · "+pct(o.v/A.spend,1)+" of media"])) +
+    '<div class="callout brand" style="font-size:12.5px">BIK shows the highest blended ROAS of any line at '+rx(A.bikGmv/A.bikSp)+', on '+moneyFull(A.bikSp)+' of spend — <b>'+pct(A.bikSp/A.spend,1)+'</b> of total media. Amazon, at '+rx(A.amzTot/A.amzSp)+', carries '+moneyFull(A.amzSp)+'. Ranking on ROAS alone would put a channel with '+pct(A.bikGmv/A.tAct,1)+' of GMV above one with '+pct(A.amzTot/A.tAct,1)+'.</div>';
+
+  // Amazon
+  const aFirst=rows[0], aLast=rows[rows.length-1];
+  const aTrend = (aLast.amzTot-aFirst.amzTot)/aFirst.amzTot;
+  const aEx = extremes(rows.map(r=>r.amzTot));
+  document.getElementById("amzKpis").innerHTML = [
+    kpi({acc:"brand", l:"Amazon total GMV", v:money(A.amzTot), f:pct(A.amzTot/A.tAct,1)+" of total business"}),
+    kpi({acc:"brand", l:"Amazon retail vs B2B", v:money(A.amzGmv)+" / "+money(A.amzB2b), f:"B2B is "+pct(A.amzB2b/A.amzTot,1)+" of Amazon GMV"}),
+    kpi({acc:"warn", l:"Amazon ads spend", v:money(A.amzSp), f:pct(A.amzSp/A.amzTot,1)+" of Amazon GMV · "+pct(A.amzSp/A.spend,1)+" of all media"}),
+    kpi({acc:aTrend>=0?"pos":"neg", l:"Trend "+aFirst.lbl+" → "+aLast.lbl, v:pctp(aTrend,1), vc:sgn(aTrend), f:"Peak "+moneyFull(rows[aEx.hi].amzTot)+" on "+rows[aEx.hi].lbl+", trough "+moneyFull(rows[aEx.lo].amzTot)+" on "+rows[aEx.lo].lbl})
+  ].join("");
+  mk("cAmz", {type:"bar", data:{labels:L(), datasets:[
+    {label:"Amazon retail GMV", data:rows.map(r=>r.amzGmv), backgroundColor:"#2C86BF", borderRadius:2, stack:"g"},
+    {label:"Amazon B2B GMV", data:rows.map(r=>r.amzB2b), backgroundColor:"#9CC3DD", borderRadius:2, stack:"g"},
+    {label:"Amazon ads spend", data:rows.map(r=>r.amzSp), backgroundColor:"#A9761B", borderRadius:2, stack:"s"},
+    {type:"line", label:"Blended ROAS", data:rows.map(r=>r.amzTot/r.amzSp), yAxisID:"y1", borderColor:"#B3261E", backgroundColor:"#B3261E", borderWidth:2.5, pointRadius:4, tension:.3},
+    {type:"line", label:"Reported ads ROAS", data:rows.map(r=>r.amzRoas), yAxisID:"y1", borderColor:"#0A7A48", backgroundColor:"#0A7A48", borderWidth:2, borderDash:[5,4], pointRadius:3.5, tension:.3}
+  ]}, options:{scales:{y:{grid:GRID, ticks:{callback:v=>money(v)}}, y1:{position:"right", grid:{display:false}, ticks:{callback:v=>v.toFixed(1)+"x"}, min:0}, x:{grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>c.dataset.yAxisID==="y1"?c.dataset.label+": "+rx(c.parsed.y):c.dataset.label+": "+moneyFull(c.parsed.y)}}}}});
+  document.getElementById("amzNote").innerHTML =
+    "Amazon is <b>"+pct(A.amzTot/A.tAct,1)+"</b> of the business and the single largest source of GMV. Spend rose every day, from <b>"+moneyFull(aFirst.amzSp)+"</b> to <b>"+moneyFull(aLast.amzSp)+"</b> (<b>"+pctp((aLast.amzSp-aFirst.amzSp)/aFirst.amzSp,1)+"</b>), while GMV moved <b>"+pctp(aTrend,1)+"</b>. "+
+    "Blended ROAS softened from <b>"+rx(aFirst.amzTot/aFirst.amzSp)+"</b> to <b>"+rx(aLast.amzTot/aLast.amzSp)+"</b> — the weakest reading of the period on the last day. "+
+    "Direction is up but volatile: day-over-day moves range from <b>"+pctp(Math.min(...rows.slice(1).map((r,i)=>(r.amzTot-rows[i].amzTot)/rows[i].amzTot)),1)+"</b> to <b>"+pctp(Math.max(...rows.slice(1).map((r,i)=>(r.amzTot-rows[i].amzTot)/rows[i].amzTot)),1)+"</b>. "+
+    "Reported ads ROAS (platform-attributed) sits well below blended ROAS on every day, as expected, since blended includes organic and repeat demand.";
+
+  // BIK
+  const bFirst=rows[0], bLast=rows[rows.length-1];
+  document.getElementById("bikMini").innerHTML = [
+    ["GMV", moneyFull(A.bikGmv), pct(A.bikGmv/A.webGmv,1)+" of website GMV"],
+    ["Spend", moneyFull(A.bikSp), pct(A.bikSp/A.spend,1)+" of all media"],
+    ["Blended ROAS", rx(A.bikGmv/A.bikSp), "highest of any channel"],
+    ["GMV trend", pctp((bLast.bikGmv-bFirst.bikGmv)/bFirst.bikGmv,0), bFirst.lbl+" → "+bLast.lbl],
+    ["Spend trend", pctp((bLast.bikSp-bFirst.bikSp)/bFirst.bikSp,0), moneyFull(bFirst.bikSp)+" → "+moneyFull(bLast.bikSp)],
+    ["Reported ROAS", rx(bLast.bikRoas), "on "+bLast.lbl]
+  ].map(m=>'<div><div class="m-l">'+m[0]+'</div><div class="m-v">'+m[1]+'</div><div class="m-f">'+m[2]+'</div></div>').join("");
+  mk("cBik", {type:"bar", data:{labels:L(), datasets:[
+    {label:"BIK GMV", data:rows.map(r=>r.bikGmv), backgroundColor:"#6B4E9E", borderRadius:3},
+    {label:"BIK spend", data:rows.map(r=>r.bikSp), backgroundColor:"#C4B3DF", borderRadius:3},
+    {type:"line", label:"Reported ROAS", data:rows.map(r=>r.bikRoas), yAxisID:"y1", borderColor:"#B3261E", backgroundColor:"#B3261E", borderWidth:2.5, pointRadius:4, tension:.3}
+  ]}, options:{scales:{y:{grid:GRID, ticks:{callback:v=>money(v)}}, y1:{position:"right", grid:{display:false}, ticks:{callback:v=>v+"x"}}, x:{grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>c.dataset.yAxisID==="y1"?c.dataset.label+": "+rx(c.parsed.y):c.dataset.label+": "+moneyFull(c.parsed.y)}}}}});
+  document.getElementById("bikNote").innerHTML =
+    "BIK spend fell <b>"+pctp((bLast.bikSp-bFirst.bikSp)/bFirst.bikSp,0)+"</b> across the period and GMV fell <b>"+pctp((bLast.bikGmv-bFirst.bikGmv)/bFirst.bikGmv,0)+"</b> with it, from <b>"+moneyFull(bFirst.bikGmv)+"</b> to <b>"+moneyFull(bLast.bikGmv)+"</b>. "+
+    "Reported ROAS rose to <b>"+rx(Math.max(...rows.map(r=>r.bikRoas)))+"</b> purely because the denominator shrank — the channel lost <b>"+moneyFull(bFirst.bikGmv-bLast.bikGmv)+"</b> of daily revenue. A rising ROAS on falling revenue is not an improvement.";
+
+  // BlinkIT
+  const missing = rows.filter(r=>r.blkSp===null);
+  document.getElementById("blkMini").innerHTML = [
+    ["GMV", moneyFull(A.blkGmv), pct(A.blkGmv/A.tAct,1)+" of total business"],
+    ["Recorded spend", moneyFull(A.blkSp), A.blkSpDays+" of "+A.n+" days recorded"],
+    ["Blended ROAS", A.blkSpDays?rx(A.blkGmvKnown/A.blkSp):"—", "on recorded days only"],
+    ["GMV with no cost data", moneyFull(A.blkGmvUnknown), missing.length?missing.map(r=>r.lbl).join(" + "):"none"],
+    ["GMV trend", pctp((rows[rows.length-1].blkGmv-rows[0].blkGmv)/rows[0].blkGmv,0), rows[0].lbl+" → "+rows[rows.length-1].lbl],
+    ["Reported ROAS range", A.blkSpDays?rx(Math.min(...rows.filter(r=>r.blkRoas!==null).map(r=>r.blkRoas)))+" – "+rx(Math.max(...rows.filter(r=>r.blkRoas!==null).map(r=>r.blkRoas))):"—", "highly volatile"]
+  ].map(m=>'<div><div class="m-l">'+m[0]+'</div><div class="m-v">'+m[1]+'</div><div class="m-f">'+m[2]+'</div></div>').join("");
+  mk("cBlk", {type:"bar", data:{labels:L(), datasets:[
+    {label:"BlinkIT GMV", data:rows.map(r=>r.blkGmv), backgroundColor:"#A9761B", borderRadius:3},
+    {label:"BlinkIT spend (recorded)", data:rows.map(r=>r.blkSp), backgroundColor:"#E3CB94", borderRadius:3},
+    {type:"line", label:"Reported ROAS", data:rows.map(r=>r.blkRoas), yAxisID:"y1", borderColor:"#B3261E", backgroundColor:"#B3261E", borderWidth:2.5, pointRadius:4, tension:.3, spanGaps:false}
+  ]}, options:{scales:{y:{grid:GRID, ticks:{callback:v=>money(v)}}, y1:{position:"right", grid:{display:false}, ticks:{callback:v=>v+"x"}}, x:{grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>{
+      if(c.parsed.y===null||c.raw===null) return c.dataset.label+": Not Updated";
+      return c.dataset.yAxisID==="y1"?c.dataset.label+": "+rx(c.parsed.y):c.dataset.label+": "+moneyFull(c.parsed.y);}}}}}});
+  document.getElementById("blkNote").innerHTML = missing.length ?
+    "<b>Spend and ROAS are marked “Not Update Yet” for "+missing.map(r=>r.lbl).join(" and ")+".</b> Those days carry <b>"+moneyFull(A.blkGmvUnknown)+"</b> of GMV — <b>"+pct(A.blkGmvUnknown/A.blkGmv,0)+"</b> of BlinkIT revenue in this period — with no cost against it. No ROAS is calculated for those days and they are excluded from every blended figure on this page rather than counted as zero spend."
+    : "All BlinkIT spend and ROAS values are present for the selected range.";
+}
+
+/* ==========================================================================
+   TAB 5 — SPEND & ROAS
+   ========================================================================== */
+const SP = [
+  {k:"metaSp", n:"Meta ads", c:"#1E6C9E"},
+  {k:"amzSp",  n:"Amazon ads", c:"#2C86BF"},
+  {k:"bikSp",  n:"BIK", c:"#6B4E9E"},
+  {k:"blkSp",  n:"BlinkIT", c:"#A9761B"},
+  {k:"googSp", n:"Google ads", c:"#B4690E"}
+];
+function renderSpend(){
+  const spEx = extremes(rows.map(r=>r.metaSp+r.amzSp+r.bikSp+(r.blkSp||0)+r.googSp));
+  const dayTot = r => r.metaSp+r.amzSp+r.bikSp+(r.blkSp||0)+r.googSp;
+  document.getElementById("spendKpis").innerHTML = [
+    kpi({acc:"warn", l:"Total recorded media spend", v:money(A.spend), f:moneyFull(A.spend)+" across "+A.n+" days"}),
+    kpi({acc:"warn", l:"Spend ÷ total GMV", v:pct(A.spendGmv,1), f:"₹"+(A.spendGmv*100).toFixed(0)+" of media per ₹100 of GMV"}),
+    kpi({acc:A.blendRoas>=3?"pos":"warn", l:"Blended ROAS (all channels)", v:rx(A.blendRoas), f:moneyFull(A.tAct)+" GMV ÷ "+moneyFull(A.spend)+" spend"}),
+    kpi({acc:"neg", l:"Heaviest spend day", v:rows[spEx.hi].lbl, f:moneyFull(dayTot(rows[spEx.hi]))+" · "+pct(dayTot(rows[spEx.hi])/A.spend,1)+" of period media"}),
+    kpi({acc:"brand", l:"Meta ads", v:money(A.metaSp), f:pct(A.metaSp/A.spend,1)+" of media · returns "+rx(A.webPaid/A.metaSp)+" on paid sale"}),
+    kpi({acc:"brand", l:"Amazon ads", v:money(A.amzSp), f:pct(A.amzSp/A.spend,1)+" of media · "+rx(A.amzTot/A.amzSp)+" blended"}),
+    kpi({acc:"void", l:"Google ads", v:"₹0 recorded", f:"Zero spend and zero ROAS recorded on all "+A.n+" days"}),
+    kpi({acc:"void", l:"BlinkIT", v:money(A.blkSp), f:"Recorded for "+A.blkSpDays+" of "+A.n+" days only"})
+  ].join("");
+
+  mk("cSpendStack", {type:"bar", data:{labels:L(), datasets:SP.filter(s=>A[s.k]>0 || s.k==="blkSp").map(s=>({
+    label:s.n, data:rows.map(r=>r[s.k]), backgroundColor:s.c, borderRadius:2}))},
+    options:{scales:{x:{stacked:true, grid:{display:false}}, y:{stacked:true, grid:GRID, ticks:{callback:v=>money(v)}}},
+      plugins:{tooltip:{callbacks:{label:c=>c.raw===null?c.dataset.label+": Not Updated":c.dataset.label+": "+moneyFull(c.parsed.y),
+        footer:it=>"Recorded total: "+moneyFull(it.reduce((t,i)=>t+(i.raw||0),0))}}}}});
+  document.getElementById("spendStackNote").innerHTML =
+    "Meta (<b>"+pct(A.metaSp/A.spend,1)+"</b>) and Amazon (<b>"+pct(A.amzSp/A.spend,1)+"</b>) are <b>"+pct((A.metaSp+A.amzSp)/A.spend,1)+"</b> of all recorded media. "+
+    "BIK is <b>"+pct(A.bikSp/A.spend,1)+"</b> and BlinkIT <b>"+pct(A.blkSp/A.spend,1)+"</b>. Google records ₹0 throughout. "+
+    "Bars for BlinkIT are absent on days marked Not Updated rather than drawn at zero.";
+
+  mk("cSpendVsGmv", {type:"bar", data:{labels:L(), datasets:[
+    {label:"Recorded spend", data:rows.map(dayTot), backgroundColor:"#9CC3DD", borderRadius:3, yAxisID:"y"},
+    {label:"Total GMV", data:rows.map(r=>r.tAct), backgroundColor:"#12496E", borderRadius:3, yAxisID:"y"},
+    {type:"line", label:"Blended ROAS", data:rows.map(r=>r.tAct/dayTot(r)), yAxisID:"y1", borderColor:"#B3261E", backgroundColor:"#B3261E", borderWidth:2.5, pointRadius:4, tension:.3}
+  ]}, options:{scales:{y:{grid:GRID, ticks:{callback:v=>money(v)}}, y1:{position:"right", grid:{display:false}, ticks:{callback:v=>v.toFixed(1)+"x"}, min:0}, x:{grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>c.dataset.yAxisID==="y1"?c.dataset.label+": "+rx(c.parsed.y):c.dataset.label+": "+moneyFull(c.parsed.y)}}}}});
+
+  // spend vs GMV narrative — find days where spend rose but website GMV fell
+  const bad = [];
+  for(let i=1;i<rows.length;i++){
+    if(rows[i].metaSp>rows[i-1].metaSp && rows[i].dAct<rows[i-1].dAct)
+      bad.push(rows[i].lbl+" (Meta spend "+pctp((rows[i].metaSp-rows[i-1].metaSp)/rows[i-1].metaSp,0)+", website GMV "+pctp((rows[i].dAct-rows[i-1].dAct)/rows[i-1].dAct,0)+")");
+  }
+  document.getElementById("spendGmvNote").innerHTML =
+    (bad.length ? "<b>Increased spend did not buy revenue on "+bad.length+" day"+(bad.length>1?"s":"")+":</b> "+bad.join("; ")+". "
+                : "On every day in this range, higher Meta spend coincided with higher website GMV. ")+
+    "Blended ROAS ranged from <b>"+rx(Math.min(...rows.map(r=>r.tAct/dayTot(r))))+"</b> to <b>"+rx(Math.max(...rows.map(r=>r.tAct/dayTot(r))))+"</b>, with the weakest reading on "+rows[extremes(rows.map(r=>r.tAct/dayTot(r))).lo].lbl+".";
+
+  // ROAS comparison
+  const roasCh = [
+    {n:"BIK", rep:A.bikGmv/A.bikSp, sp:A.bikSp, c:"#6B4E9E"},
+    {n:"BlinkIT", rep:A.blkSpDays?A.blkGmvKnown/A.blkSp:null, sp:A.blkSp, c:"#A9761B"},
+    {n:"Amazon", rep:A.amzTot/A.amzSp, sp:A.amzSp, c:"#2C86BF"},
+    {n:"Website (blended)", rep:A.webGmv/A.webAds, sp:A.webAds, c:"#12496E"},
+    {n:"Meta (on paid sale)", rep:A.webPaid/A.metaSp, sp:A.metaSp, c:"#1E6C9E"},
+    {n:"Google", rep:null, sp:A.googSp, c:"#B4690E"}
+  ];
+  mk("cRoas", {type:"bar", data:{labels:roasCh.map(c=>c.n), datasets:[
+    {label:"Blended ROAS", data:roasCh.map(c=>c.rep), backgroundColor:roasCh.map(c=>c.c), borderRadius:3, yAxisID:"y"},
+    {type:"line", label:"Recorded spend", data:roasCh.map(c=>c.sp), yAxisID:"y1", borderColor:"#B3261E", backgroundColor:"#B3261E", borderWidth:0, pointRadius:6, pointStyle:"rectRot", showLine:false}
+  ]}, options:{scales:{y:{grid:GRID, ticks:{callback:v=>v+"x"}, title:{display:true, text:"Blended ROAS"}},
+      y1:{position:"right", grid:{display:false}, ticks:{callback:v=>money(v)}, title:{display:true, text:"Spend"}}, x:{grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>c.dataset.yAxisID==="y1"?"Spend: "+moneyFull(c.parsed.y):(c.parsed.y===null?"Not calculable — no spend recorded":"Blended ROAS: "+rx(c.parsed.y))}}}}});
+
+  // quadrant
+  const medSp = A.spend/4;
+  const q = (t,cls,items,adv)=>'<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:600" class="'+cls+'">'+t+'</div><div style="font-size:12.5px;color:var(--ink-2);margin:4px 0 6px">'+adv+'</div>'+
+    (items.length?items.map(i=>'<div style="font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--line-2)">'+i+'</div>').join(""):'<div style="font-size:12.5px" class="muted">No channel in this quadrant.</div>')+'</div>';
+  document.getElementById("quadBox").innerHTML =
+    q("High spend, high return","pos",
+      ["<b>Amazon</b> — "+moneyFull(A.amzSp)+" of spend at "+rx(A.amzTot/A.amzSp)+" blended, "+pct(A.amzTot/A.tAct,1)+" of GMV. Efficiency softened on the last day; watch that before adding budget."],
+      "Scale, provided efficiency holds as budget rises.") +
+    q("High spend, low return","neg",
+      ["<b>Meta / website media</b> — "+moneyFull(A.webAds)+" of spend returning "+rx(A.webGmv/A.webAds)+" blended and "+rx(A.webPaid/A.metaSp)+" on paid sale. Reported Meta ROAS fell to "+rx(Math.min(...rows.map(r=>r.metaRoas)))+" on "+rows[extremes(rows.map(r=>r.metaRoas)).lo].lbl+", when spend was at its highest ("+moneyFull(Math.max(...rows.map(r=>r.metaSp)))+")."],
+      "Optimisation priority. This is the largest controllable inefficiency in the period.") +
+    q("Low spend, high return","warn",
+      ["<b>BIK</b> — "+rx(A.bikGmv/A.bikSp)+" blended on just "+moneyFull(A.bikSp)+" ("+pct(A.bikSp/A.spend,1)+" of media). But GMV fell "+pctp((rows[rows.length-1].bikGmv-rows[0].bikGmv)/rows[0].bikGmv,0)+" as spend was cut, so the high ratio reflects a shrinking denominator.",
+       "<b>BlinkIT</b> — "+(A.blkSpDays?rx(A.blkGmvKnown/A.blkSp):"—")+" on recorded days, "+moneyFull(A.blkSp)+" of spend. Two days of cost data are missing, so this reading is incomplete."],
+      "Test a controlled budget increase and measure incremental GMV, not ratio.") +
+    q("Low spend, low return","muted",
+      ["<b>Google ads</b> — ₹0 spend and 0 ROAS recorded on every day. Recorded spend is zero; the workbook does not say whether the channel was intentionally paused.",
+       "<b>FirstCry</b> and <b>The Moms Store</b> — GMV of "+moneyFull(A.fcGmv)+" and "+moneyFull(A.tmsGmv)+" with no spend recorded, so no efficiency can be computed."],
+      "Monitor. Confirm whether missing spend is a reporting gap or a real pause.");
+
+  const dEx = {sp:extremes(rows.map(dayTot)), ro:extremes(rows.map(r=>r.tAct/dayTot(r)))};
+  document.getElementById("tSpend").innerHTML = tbl(
+    ["Date","Meta","Google","BIK","Amazon","BlinkIT","Recorded total","Total GMV","Spend ÷ GMV","Blended ROAS","Meta ROAS (reported)"],
+    rows.map((r,i)=>"<tr><td>"+r.lbl+"</td><td>"+moneyFull(r.metaSp)+"</td><td class='muted'>₹0</td><td>"+moneyFull(r.bikSp)+"</td><td>"+moneyFull(r.amzSp)+"</td>"+
+      (r.blkSp===null?'<td class="cell-na">Not Updated</td>':"<td>"+moneyFull(r.blkSp)+"</td>")+
+      hcell(dayTot(r),i,dEx.sp,v=>moneyFull(v),true)+
+      "<td>"+moneyFull(r.tAct)+"</td><td>"+pct(dayTot(r)/r.tAct,1)+"</td>"+
+      hcell(r.tAct/dayTot(r),i,dEx.ro,v=>rx(v))+
+      "<td>"+rx(r.metaRoas)+"</td></tr>").join(""),
+    "<tr><td>Total</td><td>"+moneyFull(A.metaSp)+"</td><td>₹0</td><td>"+moneyFull(A.bikSp)+"</td><td>"+moneyFull(A.amzSp)+"</td><td>"+moneyFull(A.blkSp)+"</td><td>"+moneyFull(A.spend)+"</td><td>"+moneyFull(A.tAct)+"</td><td>"+pct(A.spendGmv,1)+"</td><td>"+rx(A.blendRoas)+"</td><td>—</td></tr>");
+}
+
+/* ==========================================================================
+   TAB 6 — DAILY & WEEKLY
+   ========================================================================== */
+function renderDaily(){
+  const dayTot = r => r.metaSp+r.amzSp+r.bikSp+(r.blkSp||0)+r.googSp;
+  const E = {
+    tot:extremes(rows.map(r=>r.tAct)), web:extremes(rows.map(r=>r.dAct)), amz:extremes(rows.map(r=>r.amzTot)),
+    blk:extremes(rows.map(r=>r.blkGmv)), fc:extremes(rows.map(r=>r.fcGmv)), bik:extremes(rows.map(r=>r.bikGmv)),
+    meta:extremes(rows.map(r=>r.metaSp)), amzS:extremes(rows.map(r=>r.amzSp)), bikS:extremes(rows.map(r=>r.bikSp)),
+    sp:extremes(rows.map(dayTot)), ro:extremes(rows.map(r=>r.tAct/dayTot(r))),
+    cv:extremes(rows.map(r=>r.orders/r.traff)), av:extremes(rows.map(r=>r.dAct/r.orders))
+  };
+  const best = E.tot.hi, worst = E.tot.lo;
+  document.getElementById("tDaily").innerHTML = tbl(
+    ["Date","Total GMV","Website","Amazon","BlinkIT","FirstCry","BIK","Meta spend","Amazon spend","BIK spend","Recorded spend","Blended ROAS","Web conversion","Web AOV"],
+    rows.map((r,i)=>{
+      const cls = i===best ? " class='dayrow-best'" : (i===worst ? " class='dayrow-worst'" : "");
+      return "<tr"+cls+"><td>"+r.lbl+" · "+r.dow+"</td>"+
+        hcell(r.tAct,i,E.tot,v=>moneyFull(v))+
+        hcell(r.dAct,i,E.web,v=>moneyFull(v))+
+        hcell(r.amzTot,i,E.amz,v=>moneyFull(v))+
+        hcell(r.blkGmv,i,E.blk,v=>moneyFull(v))+
+        hcell(r.fcGmv,i,E.fc,v=>moneyFull(v))+
+        hcell(r.bikGmv,i,E.bik,v=>moneyFull(v))+
+        hcell(r.metaSp,i,E.meta,v=>moneyFull(v),true)+
+        hcell(r.amzSp,i,E.amzS,v=>moneyFull(v),true)+
+        hcell(r.bikSp,i,E.bikS,v=>moneyFull(v),true)+
+        hcell(dayTot(r),i,E.sp,v=>moneyFull(v),true)+
+        hcell(r.tAct/dayTot(r),i,E.ro,v=>rx(v))+
+        hcell(r.orders/r.traff,i,E.cv,v=>pct(v,2))+
+        hcell(r.dAct/r.orders,i,E.av,v=>moneyFull(v))+"</tr>";
+    }).join(""),
+    "<tr><td>Total</td><td>"+moneyFull(A.tAct)+"</td><td>"+moneyFull(A.dAct)+"</td><td>"+moneyFull(A.amzTot)+"</td><td>"+moneyFull(A.blkGmv)+"</td><td>"+moneyFull(A.fcGmv)+"</td><td>"+moneyFull(A.bikGmv)+"</td><td>"+moneyFull(A.metaSp)+"</td><td>"+moneyFull(A.amzSp)+"</td><td>"+moneyFull(A.bikSp)+"</td><td>"+moneyFull(A.spend)+"</td><td>"+rx(A.blendRoas)+"</td><td>"+pct(A.conv,2)+"</td><td>"+moneyFull(A.aov)+"</td></tr>");
+
+  // growth
+  const g = rows.map((r,i)=> i===0 ? null : (r.tAct-rows[i-1].tAct)/rows[i-1].tAct*100);
+  mk("cGrowth", {type:"bar", data:{labels:L(), datasets:[
+    {label:"Day-over-day GMV growth", data:g, backgroundColor:g.map(v=>v===null?"#DCE3EA":(v>=0?"#0A7A48":"#B3261E")), borderRadius:3}
+  ]}, options:{scales:{y:{grid:GRID, ticks:{callback:v=>v+"%"}}, x:{grid:{display:false}}},
+    plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>c.raw===null?"No prior day in range":"Growth: "+(c.parsed.y>0?"+":"")+c.parsed.y.toFixed(2)+"%"}}}}});
+  const gv = g.slice(1);
+  const gi = gv.indexOf(Math.max(...gv))+1, li = gv.indexOf(Math.min(...gv))+1;
+  document.getElementById("growthNote").innerHTML =
+    "Biggest gain <b>"+rows[gi].lbl+"</b> at <b>"+pctp(g[gi]/100,2)+"</b> ("+moneyFull(rows[gi].tAct-rows[gi-1].tAct)+"). "+
+    "Biggest fall <b>"+rows[li].lbl+"</b> at <b>"+pctp(g[li]/100,2)+"</b> ("+moneyFull(rows[li].tAct-rows[li-1].tAct)+"). "+
+    "Computed from reconciled Dabble + 3P actuals. The workbook's own Growth-Degrowth field is calculated on its Total GMV column, which double-counts Amazon B2B — see the data notes on tab 7 for the reconciliation.";
+
+  const gch = CH.filter(c=>c.inTotal);
+  mk("cGrowthContrib", {type:"bar", data:{labels:L().slice(1), datasets:gch.map(c=>({
+    label:c.n, data:rows.slice(1).map((r,i)=>c.d(r)-c.d(rows[i])), backgroundColor:c.c, borderRadius:2}))},
+    options:{scales:{x:{stacked:true, grid:{display:false}}, y:{stacked:true, grid:GRID, ticks:{callback:v=>money(v)}}},
+      plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+": "+(c.parsed.y>=0?"+":"−")+moneyFull(Math.abs(c.parsed.y)),
+        footer:it=>"Net change: "+moneyFull(it.reduce((t,i)=>t+i.parsed.y,0))}}}}});
+
+  // week
+  const dayTotW = r => r.metaSp+r.amzSp+r.bikSp+(r.blkSp||0)+r.googSp;
+  document.getElementById("weekKpis").innerHTML = [
+    kpi({acc:A.tAch>=1?"pos":"neg", l:"Week 1 GMV", v:money(A.tAct), f:"Target "+moneyFull(A.tPlan)}),
+    kpi({acc:A.tAch>=1?"pos":"neg", l:"Week 1 achievement", v:pct(A.tAch,2), vc:A.tAch>=1?"pos":"neg", f:(A.tVar>=0?"+":"−")+moneyFull(Math.abs(A.tVar))+" vs plan"}),
+    kpi({acc:"warn", l:"Week 1 recorded spend", v:money(A.spend), f:pct(A.spendGmv,1)+" of GMV"}),
+    kpi({acc:"brand", l:"Week 1 blended ROAS", v:rx(A.blendRoas), f:"GMV ÷ recorded media spend"}),
+    kpi({acc:"brand", l:"Website conversion", v:pct(A.conv,2), f:nf(A.orders)+" orders from "+nf(A.traff)+" visits"}),
+    kpi({acc:"brand", l:"Website AOV", v:moneyFull(A.aov), f:"GMV ÷ orders"}),
+    kpi({acc:"brand", l:"Average GMV per day", v:money(A.tAct/A.n), f:"Across "+A.n+" days, not 7"}),
+    kpi({acc:"void", l:"Days covered", v:A.n+" of 7", f:rows[0].dow+" to "+rows[rows.length-1].dow+" · Monday missing"})
+  ].join("");
+}
+
+/* ==========================================================================
+   TAB 7 — ALERTS & CEO INSIGHTS
+   ========================================================================== */
+function renderInsights(){
+  const dayTot = r => r.metaSp+r.amzSp+r.bikSp+(r.blkSp||0)+r.googSp;
+  const al = [];
+  const add=(sev,t,d,e)=>al.push({sev,t,d,e});
+
+  // 1. 3P achievement
+  if(A.pAch < 0.95) add("crit","Marketplace revenue is materially below plan",
+    "3P GMV of <b>"+moneyFull(A.pAct)+"</b> against a <b>"+moneyFull(A.pPlan)+"</b> plan is <b>"+pct(A.pAch,1)+"</b> — a <b>"+moneyFull(Math.abs(A.pVar))+"</b> shortfall. 3P is "+pct(A.pAct/A.tAct,0)+" of the business, so this is the single largest gap to plan.",
+    "Threshold: 3P achievement below 95%.");
+
+  // 2. concentration
+  const sh = [{n:"Amazon",v:A.amzTot},{n:"Website",v:A.webGmv},{n:"FirstCry",v:A.fcGmv},{n:"BlinkIT",v:A.blkGmv}].sort((a,b)=>b.v-a.v);
+  if(sh[0].v/A.tAct > 0.45) add("crit","Single-channel concentration risk",
+    "<b>"+sh[0].n+"</b> is <b>"+pct(sh[0].v/A.tAct,1)+"</b> of total GMV ("+moneyFull(sh[0].v)+"). The top two channels together are <b>"+pct((sh[0].v+sh[1].v)/A.tAct,1)+"</b>. A policy, ranking or fee change on one platform would move a majority of revenue.",
+    "Threshold: any single channel above 45% of GMV.");
+
+  // 3. spend up, GMV down
+  const inef = [];
+  for(let i=1;i<rows.length;i++) if(rows[i].metaSp>rows[i-1].metaSp*1.05 && rows[i].dAct<rows[i-1].dAct) inef.push(rows[i]);
+  if(inef.length) add("crit","Higher website media spend did not produce revenue",
+    inef.map(r=>{const p=rows[rows.indexOf(r)-1];
+      return "On <b>"+r.lbl+"</b> Meta spend rose "+pctp((r.metaSp-p.metaSp)/p.metaSp,0)+" to <b>"+moneyFull(r.metaSp)+"</b> while website GMV fell "+pctp((r.dAct-p.dAct)/p.dAct,0)+" to <b>"+moneyFull(r.dAct)+"</b>; reported Meta ROAS moved "+rx(p.metaRoas)+" → <b>"+rx(r.metaRoas)+"</b> and cost per order "+moneyFull(p.markSp/p.orders)+" → <b>"+moneyFull(r.markSp/r.orders)+"</b>.";}).join("<br>"),
+    "Threshold: Meta spend up more than 5% day over day while website GMV falls.");
+
+  // 4. conversion drop
+  const cvs = rows.map(r=>r.orders/r.traff), cx = extremes(cvs);
+  if((cvs[cx.hi]-cvs[cx.lo])/cvs[cx.hi] > 0.25) add("watch","Website conversion swung sharply within the period",
+    "Conversion ranged from <b>"+pct(cvs[cx.hi],2)+"</b> on "+rows[cx.hi].lbl+" to <b>"+pct(cvs[cx.lo],2)+"</b> on "+rows[cx.lo].lbl+" — a <b>"+pct((cvs[cx.hi]-cvs[cx.lo])/cvs[cx.hi],0)+"</b> relative drop. Cart-to-order held steady over the same span, so the loss sits between landing and add-to-cart.",
+    "Threshold: peak-to-trough conversion decline above 25%.");
+
+  // 5. single-day dependency
+  const peak = rows.reduce((b,r)=>r.tAct>b.tAct?r:b, rows[0]);
+  const peakShare = (peak.dAct-peak.dPlan)/A.dVar;
+  if(peakShare > 0.5) add("watch","The beat rests on a single day",
+    "<b>"+peak.lbl+"</b> contributes <b>"+pct(peakShare,0)+"</b> of the entire website surplus. Excluding it, the business ran at <b>"+pct(sum(rows.filter(r=>r!==peak),r=>r.tAct)/sum(rows.filter(r=>r!==peak),r=>r.tPlan),1)+"</b> of plan. The uplift came from AOV of <b>"+moneyFull(peak.dAct/peak.orders)+"</b> on only "+peak.orders+" orders and sits largely outside paid sale ("+pct(peak.webPaid/peak.dAct,0)+" paid).",
+    "Threshold: one day contributing more than 50% of cumulative variance.");
+
+  // 6. missing data
+  const miss = rows.filter(r=>r.blkSp===null);
+  if(miss.length) add("watch","Cost data missing for BlinkIT",
+    "Spend and ROAS are <b>Not Update Yet</b> for <b>"+miss.map(r=>r.lbl).join(" and ")+"</b>, covering <b>"+moneyFull(A.blkGmvUnknown)+"</b> of GMV. These days are excluded from all ROAS and blended-efficiency figures rather than counted as zero spend, so period spend is understated by an unknown amount.",
+    "Threshold: any source field marked not updated.");
+
+  // 7. Meta ROAS
+  const mr = Math.min(...rows.map(r=>r.metaRoas)), mri = rows.findIndex(r=>r.metaRoas===mr);
+  if(mr < 1.5) add("watch","Meta efficiency fell below 1.5x",
+    "Reported Meta ROAS bottomed at <b>"+rx(mr)+"</b> on "+rows[mri].lbl+", on the period's highest spend of <b>"+moneyFull(rows[mri].metaSp)+"</b>. Website blended ROAS on the same day was <b>"+rx(rows[mri].webBlendRoas)+"</b>, also the period low.",
+    "Threshold: reported channel ROAS below 1.5x on any day.");
+
+  // 8. Google zero
+  if(A.googSp === 0) add("watch","Google Ads records zero spend and zero return",
+    "Google Ads shows <b>₹0</b> spend and <b>0</b> ROAS on all "+A.n+" days. Recorded spend is zero. The workbook does not indicate whether the channel is paused, unbudgeted, or simply not being reported — that needs confirming before it is read either way.",
+    "Threshold: a tracked channel with no recorded activity across the full period.");
+
+  // 9. BIK decline
+  const bd = (rows[rows.length-1].bikGmv-rows[0].bikGmv)/rows[0].bikGmv;
+  if(bd < -0.4) add("watch","BIK revenue has collapsed alongside its budget",
+    "BIK GMV fell <b>"+pctp(bd,0)+"</b> from "+moneyFull(rows[0].bikGmv)+" to "+moneyFull(rows[rows.length-1].bikGmv)+" as spend was cut <b>"+pctp((rows[rows.length-1].bikSp-rows[0].bikSp)/rows[0].bikSp,0)+"</b>. Reported ROAS rose to "+rx(Math.max(...rows.map(r=>r.bikRoas)))+" only because the spend denominator shrank; in rupees the channel lost <b>"+moneyFull(rows[0].bikGmv-rows[rows.length-1].bikGmv)+"</b> of daily revenue.",
+    "Threshold: channel GMV decline above 40% across the period.");
+
+  // 10. AOV volatility
+  const av = rows.map(r=>r.dAct/r.orders), ax = extremes(av);
+  if(av[ax.hi]/av[ax.lo] > 2) add("watch","Basket size is unstable",
+    "AOV ranged from <b>"+moneyFull(av[ax.lo])+"</b> on "+rows[ax.lo].lbl+" to <b>"+moneyFull(av[ax.hi])+"</b> on "+rows[ax.hi].lbl+" — a <b>"+(av[ax.hi]/av[ax.lo]).toFixed(1)+"x</b> spread. Reported new-buyer AOV on "+rows[ax.hi].lbl+" was <b>"+moneyFull(rows[ax.hi].nbAov)+"</b>. Forecasting off the period average of "+moneyFull(A.aov)+" would be misleading.",
+    "Threshold: peak-to-trough AOV ratio above 2x.");
+
+  // 11. spend intensity
+  const mki = extremes(rows.map(r=>r.markPct));
+  if(rows[mki.hi].markPct > 0.55) add("watch","Marketing intensity spiked on one day",
+    "On <b>"+rows[mki.hi].lbl+"</b> marketing spend reached <b>"+pct(rows[mki.hi].markPct,1)+"</b> of website GMV ("+moneyFull(rows[mki.hi].markSp)+" on "+moneyFull(rows[mki.hi].dAct)+"), against a period average of <b>"+pct(A.spOverGmv,1)+"</b>. Cost per order that day was <b>"+moneyFull(rows[mki.hi].markSp/rows[mki.hi].orders)+"</b>.",
+    "Threshold: single-day marketing spend above 55% of GMV.");
+
+  // healthy
+  if(A.dAch >= 1) add("ok","Website is ahead of plan",
+    "Website GMV of <b>"+moneyFull(A.dAct)+"</b> against a <b>"+moneyFull(A.dPlan)+"</b> plan is <b>"+pct(A.dAch,1)+"</b>, beating plan on "+rows.filter(r=>r.dAct>=r.dPlan).length+" of "+A.n+" days.", "");
+  if(A.nrRatio > 0.8) add("ok","Revenue quality is stable",
+    "Net revenue is <b>"+pct(A.nrRatio,1)+"</b> of website GMV and holds within <b>"+pct(Math.min(...rows.map(r=>r.netRev/r.dAct)),1)+"</b>–<b>"+pct(Math.max(...rows.map(r=>r.netRev/r.dAct)),1)+"</b> on every day. No leakage in the take rate.", "");
+  const amzT = (rows[rows.length-1].amzTot-rows[0].amzTot)/rows[0].amzTot;
+  if(amzT > 0) add("ok","Amazon revenue is growing",
+    "Amazon total GMV moved <b>"+pctp(amzT,1)+"</b> across the period to <b>"+moneyFull(rows[rows.length-1].amzTot)+"</b>, with a peak of "+moneyFull(Math.max(...rows.map(r=>r.amzTot)))+". Blended ROAS averaged <b>"+rx(A.amzTot/A.amzSp)+"</b>.", "");
+
+  const order = {crit:0, watch:1, ok:2};
+  const dot = {crit:"🔴", watch:"🟠", ok:"🟢"};
+  al.sort((a,b)=>order[a.sev]-order[b.sev]);
+  document.getElementById("alertBox").innerHTML = al.map(a=>
+    '<div class="alert"><div class="dot">'+dot[a.sev]+'</div><div><div class="ttl">'+a.t+'</div><div class="dsc">'+a.d+'</div>'+(a.e?'<div class="evd">'+a.e+'</div>':'')+'</div></div>').join("");
+
+  // CEO insights
+  const peak2 = rows.reduce((b,r)=>r.tAct>b.tAct?r:b, rows[0]);
+  const prev2 = rows[rows.indexOf(peak2)-1];
+  const rest = rows.filter(r=>r!==peak2);
+  document.getElementById("ceoInsights").innerHTML = [
+    ins({t:"pos", open:true, h:"What is going well", b:"<ul>"+
+      "<li>Website GMV of <b>"+moneyFull(A.dAct)+"</b> is <b>"+pct(A.dAch,1)+"</b> of plan, <b>+"+moneyFull(A.dVar)+"</b>.</li>"+
+      "<li>Amazon grew <b>"+pctp((rows[rows.length-1].amzTot-rows[0].amzTot)/rows[0].amzTot,1)+"</b> and remains the largest channel at <b>"+moneyFull(A.amzTot)+"</b>.</li>"+
+      "<li>Net revenue holds at <b>"+pct(A.nrRatio,1)+"</b> of GMV every day — discounting is not eroding the take rate.</li>"+
+      "<li>Returning visitors convert at <b>"+pct(A.rbConv,2)+"</b> against <b>"+pct(A.nbConv,2)+"</b> for new traffic.</li></ul>"}),
+    ins({t:"neg", open:true, h:"What is not going well", b:"<ul>"+
+      "<li>3P is <b>"+pct(A.pAch,1)+"</b> of plan, <b>"+moneyFull(Math.abs(A.pVar))+"</b> short — the reason the group beat is only <b>"+pct(A.tAch,1)+"</b>.</li>"+
+      "<li>Website traffic fell from <b>"+nf(Math.max(...rows.map(r=>r.traff)))+"</b> to <b>"+nf(rows[rows.length-1].traff)+"</b> and conversion bottomed at <b>"+pct(Math.min(...rows.map(r=>r.orders/r.traff)),2)+"</b>.</li>"+
+      "<li>Meta spend peaked at <b>"+moneyFull(Math.max(...rows.map(r=>r.metaSp)))+"</b> on the day website GMV was weakest, pushing cost per order to <b>"+moneyFull(Math.max(...rows.map(r=>r.markSp/r.orders)))+"</b>.</li>"+
+      "<li>BIK GMV fell <b>"+pctp((rows[rows.length-1].bikGmv-rows[0].bikGmv)/rows[0].bikGmv,0)+"</b>, a loss of <b>"+moneyFull(rows[0].bikGmv-rows[rows.length-1].bikGmv)+"</b> in daily revenue.</li></ul>"}),
+    ins({t:"brand", h:"What is driving the business", b:"<ul>"+
+      "<li>Amazon supplies <b>"+pct(A.amzTot/A.tAct,1)+"</b> of GMV; the website supplies <b>"+pct(A.webGmv/A.tAct,1)+"</b>. Everything else is <b>"+pct((A.blkGmv+A.fcGmv+A.tmsGmv)/A.tAct,1)+"</b>.</li>"+
+      "<li>Website GMV growth is basket-led, not demand-led: orders fell <b>"+pctp((rows[rows.length-1].orders-rows[0].orders)/rows[0].orders,0)+"</b> while AOV rose <b>"+pctp(((rows[rows.length-1].dAct/rows[rows.length-1].orders)-(rows[0].dAct/rows[0].orders))/(rows[0].dAct/rows[0].orders),0)+"</b>.</li>"+
+      "<li>New buyers place <b>"+pct(A.nbOrd/A.orders,0)+"</b> of orders; returning buyers deliver the better conversion and the lower risk.</li></ul>"}),
+    ins({t:"warn", h:"Where spend is increasing, and whether it is working", b:"<ul>"+
+      "<li>Total recorded media <b>"+moneyFull(A.spend)+"</b> = <b>"+pct(A.spendGmv,1)+"</b> of GMV, blended <b>"+rx(A.blendRoas)+"</b>.</li>"+
+      "<li>Amazon spend rose every single day, <b>"+moneyFull(rows[0].amzSp)+"</b> → <b>"+moneyFull(rows[rows.length-1].amzSp)+"</b>. GMV grew, but blended ROAS slipped to <b>"+rx(rows[rows.length-1].amzTot/rows[rows.length-1].amzSp)+"</b> on the last day, its weakest.</li>"+
+      "<li>Meta spend rose <b>"+pctp((Math.max(...rows.map(r=>r.metaSp))-rows[0].metaSp)/rows[0].metaSp,0)+"</b> to its peak while website GMV <i>fell</i> — the clearest case of spend not converting to revenue in this period.</li>"+
+      "<li>Website media absorbs <b>"+pct(A.spOverNr,1)+"</b> of website net revenue.</li></ul>"}),
+    ins({t:"pos", h:"What to scale, what to fix", b:"<ul>"+
+      "<li><b>Scale carefully:</b> Amazon — largest channel, growing, <b>"+rx(A.amzTot/A.amzSp)+"</b> blended. Add budget only while efficiency holds; the last-day dip is the thing to watch.</li>"+
+      "<li><b>Fix first:</b> Meta / website media — <b>"+moneyFull(A.webAds)+"</b> at <b>"+rx(A.webGmv/A.webAds)+"</b> blended, with reported ROAS as low as <b>"+rx(Math.min(...rows.map(r=>r.metaRoas)))+"</b>. This is the largest controllable inefficiency.</li>"+
+      "<li><b>Test:</b> BIK — <b>"+rx(A.bikGmv/A.bikSp)+"</b> blended on <b>"+pct(A.bikSp/A.spend,1)+"</b> of media. Restore a measured budget and check whether revenue returns.</li>"+
+      "<li><b>Resolve reporting:</b> BlinkIT (two days missing) and Google (₹0 recorded) before either is judged.</li></ul>"}),
+    ins({t:"brand", h:"Is website performance healthy", b:"<ul>"+
+      "<li>Against plan, yes — <b>"+pct(A.dAch,1)+"</b>. Against its own funnel, not really.</li>"+
+      "<li>Traffic <b>"+pctp((rows[rows.length-1].traff-rows[0].traff)/rows[0].traff,1)+"</b>, orders <b>"+pctp((rows[rows.length-1].orders-rows[0].orders)/rows[0].orders,1)+"</b>, ATC rate <b>"+pct(rows[0].atc/rows[0].traff,1)+"</b> → <b>"+pct(rows[rows.length-1].atc/rows[rows.length-1].traff,1)+"</b>.</li>"+
+      "<li>Excluding the peak day, website GMV across the other "+rest.length+" days was <b>"+moneyFull(sum(rest,r=>r.dAct))+"</b> at <b>"+pct(sum(rest,r=>r.dAct)/sum(rest,r=>r.dPlan),1)+"</b> of plan — still ahead, but on a declining funnel.</li>"+
+      "<li>Revenue per visitor averaged <b>"+moneyFull(A.rpv)+"</b>; five of "+A.n+" days sat below that.</li></ul>"}),
+    ins({t:"warn", h:"What changed materially on "+peak2.lbl, b:"<ul>"+
+      "<li>Total GMV <b>"+moneyFull(peak2.tAct)+"</b>, <b>"+pctp((peak2.tAct-prev2.tAct)/prev2.tAct,1)+"</b> day over day and <b>"+pct(peak2.tAct/peak2.tPlan,0)+"</b> of plan.</li>"+
+      "<li>All of it is website: website <b>+"+moneyFull(peak2.dAct-prev2.dAct)+"</b> while Amazon <b>"+moneyFull(peak2.amzTot-prev2.amzTot)+"</b>, BlinkIT <b>"+moneyFull(peak2.blkGmv-prev2.blkGmv)+"</b>, FirstCry <b>"+moneyFull(peak2.fcGmv-prev2.fcGmv)+"</b> and BIK <b>"+moneyFull(peak2.bikGmv-prev2.bikGmv)+"</b> all fell.</li>"+
+      "<li>It is not volume: traffic was the period's lowest at <b>"+nf(peak2.traff)+"</b> and orders were <b>"+peak2.orders+"</b>. AOV went <b>"+moneyFull(prev2.dAct/prev2.orders)+"</b> → <b>"+moneyFull(peak2.dAct/peak2.orders)+"</b>.</li>"+
+      "<li>It is not media: paid sale was flat at <b>"+moneyFull(peak2.webPaid)+"</b>, only <b>"+pct(peak2.webPaid/peak2.dAct,0)+"</b> of website GMV against <b>"+pct(prev2.webPaid/prev2.dAct,0)+"</b> the day before.</li>"+
+      "<li>Reported new-buyer AOV was <b>"+moneyFull(peak2.nbAov)+"</b>. A small number of very large orders is the only explanation the data supports — verify before forecasting on it.</li></ul>"}),
+    ins({t:"neg", h:"What management should watch next", b:"<ul>"+
+      "<li><b>Marketplace recovery.</b> 3P must close <b>"+moneyFull(Math.abs(A.pVar))+"</b>. At the current daily run rate of <b>"+moneyFull(A.pAct/A.n)+"</b> against a plan of <b>"+moneyFull(A.pPlan/A.n)+"</b>, the gap widens each day it is not addressed.</li>"+
+      "<li><b>Whether "+peak2.lbl+" repeats.</b> If it does not, the period beat does not carry into next week.</li>"+
+      "<li><b>Website conversion.</b> It recovered to <b>"+pct(rows[rows.length-1].orders/rows[rows.length-1].traff,2)+"</b> on falling traffic. Confirm whether the mid-period drop was traffic quality or a site issue — the workbook cannot distinguish the two.</li>"+
+      "<li><b>Amazon efficiency as spend rises.</b> Blended ROAS at its weakest on the last day while spend was at its highest.</li>"+
+      "<li><b>Close the reporting gaps.</b> BlinkIT cost for "+miss.map(r=>r.lbl).join(" and ")+", Google's zero, and the Total GMV double-count all need resolving before the next review.</li></ul>"})
+  ].join("");
+
+  // data notes
+  const repDiff = A.totRep - A.tAct;
+  document.getElementById("dataNotes").innerHTML =
+    '<div class="grid g2">'+
+    '<div><h4 style="font-size:13.5px;margin-bottom:8px">Validated against the workbook</h4><div style="font-size:12.8px;color:var(--ink-2);line-height:1.75">'+
+      '<div>Dabble plan — computed <b>'+moneyFull(A.dPlan)+'</b>, workbook <b>'+moneyFull(BOOK.dPlan)+'</b> <span class="badge b-pos">ties</span></div>'+
+      '<div>Dabble actual — computed <b>'+moneyFull(A.dAct)+'</b>, workbook <b>'+moneyFull(BOOK.dAct)+'</b> <span class="badge b-pos">ties</span></div>'+
+      '<div>Dabble achievement — computed <b>'+pct(A.dAch,2)+'</b>, workbook <b>'+pct(BOOK.dAch,2)+'</b> <span class="badge b-pos">ties</span></div>'+
+      '<div>Dabble + 3P plan — computed <b>'+moneyFull(A.tPlan)+'</b>, workbook <b>'+moneyFull(BOOK.tPlan)+'</b> <span class="badge b-pos">ties</span></div>'+
+      '<div>Dabble + 3P actual — computed <b>'+moneyFull(A.tAct)+'</b>, workbook <b>'+moneyFull(BOOK.tAct)+'</b> <span class="badge b-pos">ties</span></div>'+
+      '<div>Dabble + 3P achievement — computed <b>'+pct(A.tAch,2)+'</b>, workbook <b>'+pct(BOOK.tAch,2)+'</b> <span class="badge b-pos">ties</span></div>'+
+      '<div style="margin-top:8px">Website GMV reconciles to Dabble GMV to the rupee on all '+A.n+' days.</div>'+
+      '<div>Channel GMV (website + Amazon total + BlinkIT + FirstCry + The Moms Store) reconciles to Dabble + 3P actual within ₹1 per day.</div>'+
+      '<div>Reported Conv, CPU and Mark% all reproduce exactly from orders, traffic, spend and GMV.</div>'+
+    '</div></div>'+
+    '<div><h4 style="font-size:13.5px;margin-bottom:8px">Discrepancies found and how they are handled</h4><div style="font-size:12.8px;color:var(--ink-2);line-height:1.75">'+
+      '<div><span class="badge b-warn">Total GMV column</span> The channel sheet\'s Total GMV sums to <b>'+moneyFull(A.totRep)+'</b>, <b>'+moneyFull(repDiff)+'</b> above the reconciled <b>'+moneyFull(A.tAct)+'</b>. The gap is Amazon B2B (<b>'+moneyFull(A.amzB2b)+'</b>) counted twice, less The Moms Store (<b>₹759</b>) omitted on Sep 1. This dashboard uses the reconciled figure throughout.</div>'+
+      '<div style="margin-top:8px"><span class="badge b-warn">AOV column</span> The website sheet\'s AOV equals net revenue ÷ orders on three days but matches nothing on Sep 1, Sep 4 and Sep 5. AOV here is computed as <b>GMV ÷ orders</b> and stated as such.</div>'+
+      '<div style="margin-top:8px"><span class="badge b-warn">Segment traffic</span> Returning plus new traffic is <b>'+nf(A.trAttrib)+'</b> against a site total of <b>'+nf(A.traff)+'</b>. <b>'+nf(A.trGap)+'</b> visits ('+pct(A.trGap/A.traff,1)+') are unattributed; segment rates use identified traffic only.</div>'+
+      '<div style="margin-top:8px"><span class="badge b-warn">Segment spend</span> RB plus NB spend is <b>'+moneyFull(A.rbSp+A.nbSp)+'</b> against marketing spend of <b>'+moneyFull(A.markSp)+'</b>. Recorded new-buyer cost per order is below returning — the reverse of the usual pattern. Flagged, not adjusted.</div>'+
+      '<div style="margin-top:8px"><span class="badge b-warn">Website Ads Spends</span> The website media line totals <b>'+moneyFull(A.webAds)+'</b> while Meta plus BIK totals <b>'+moneyFull(A.metaSp+A.bikSp)+'</b> — a <b>'+moneyFull(Math.abs(A.metaSp+A.bikSp-A.webAds))+'</b> gap traceable to BIK spend landing on the wrong row in that column. Total recorded spend on the Spend tab (<b>'+moneyFull(A.spend)+'</b>) is built from the individual platform lines.</div>'+
+      '<div style="margin-top:8px"><span class="badge b-void">Not updated</span> BlinkIT spend and ROAS for '+rows.filter(r=>r.blkSp===null).map(r=>r.lbl).join(" and ")+'. Excluded from all calculations; never read as zero.</div>'+
+      '<div style="margin-top:8px"><span class="badge b-void">Zero, not absent</span> Google Ads spend and ROAS are recorded as 0 on every day. Shown as ₹0 recorded, with no inference about whether the channel was paused.</div>'+
+      '<div style="margin-top:8px"><span class="badge b-brand">Not double counted</span> BIK GMV sits inside Website GMV Total (the column header says so). It is reported separately for visibility but excluded from channel contribution totals.</div>'+
+    '</div></div></div>';
+}
+
+/* ==========================================================================
+   WIRING
+   ========================================================================== */
+function renderAll(){
+  A = agg(rows);
+  document.getElementById("periodSub").textContent =
+    rows[0].lbl+"–"+rows[rows.length-1].lbl.replace("Sep ","")+", 2026 · Week 1 ("+
+    (A.n===6 ? "partial week, 6 of 7 days" : A.n+" of 7 days selected")+")";
+  renderExec(); renderTarget(); renderFunnel(); renderChannel(); renderSpend(); renderDaily(); renderInsights();
+}
+function buildSelects(){
+  const f=document.getElementById("dFrom"), t=document.getElementById("dTo");
+  D.forEach((r,i)=>{
+    f.insertAdjacentHTML("beforeend",'<option value="'+i+'">'+r.lbl+' · '+r.dow+'</option>');
+    t.insertAdjacentHTML("beforeend",'<option value="'+i+'">'+r.lbl+' · '+r.dow+'</option>');
+  });
+  f.value=0; t.value=5;
+  const sync=()=>{
+    FROM=+f.value; TO=+t.value;
+    if(TO<FROM){ TO=FROM; t.value=TO; }
+    if(TO-FROM < 1){ TO=Math.min(5, FROM+1); t.value=TO; }   // need ≥2 days for trends
+    rows=D.slice(FROM,TO+1); renderAll();
+  };
+  f.onchange=sync; t.onchange=sync;
+  document.getElementById("btnReset").onclick=()=>{f.value=0; t.value=5; sync();};
+}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected", x===b ? "true":"false"));
+  document.querySelectorAll(".panel").forEach(p=>p.hidden = p.id!==b.dataset.p);
+  window.scrollTo({top:0, behavior:"instant"});
+  Object.values(REG).forEach(c=>c.resize());
+});
+buildSelects();
+renderAll();
+</script>
+</body>
+</html>
